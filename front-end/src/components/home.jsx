@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import { Tabs,Tab,Form,Button,Table } from 'react-bootstrap';
+import Excel from './excel'
 
 import Accounts from '../api/Account';
 
@@ -33,6 +34,7 @@ export default function Home() {
     const handleRadio = (e) => {
         setselected(e.target.value)
     }
+
     return (
         <div className='homeBrdr'>
             <div className='wallet'>
@@ -70,10 +72,10 @@ export default function Home() {
                         </div>
                         <div className="row">
                             <div className="col-12">
-                                <Form.Group>
-                                    <Form.File id="exampleFormControlFile1" />
-                                </Form.Group>
-
+                                {/*<div>*/}
+                                {/*    <Button variant="primary"  onClick={UploadFile}>Upload</Button>*/}
+                                {/*</div>*/}
+                                <Excel />
                                 <Form.Group controlId="exampleForm.ControlTextarea1">
                                     <Form.Label>Addresses with Amounts</Form.Label>
                                     <Form.Control
