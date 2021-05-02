@@ -4,6 +4,11 @@ import Excel from './excel'
 
 import Accounts from '../api/Account';
 
+import senderAbi from '../config/sender.abi';
+import senderAddress from '../config/contracts';
+
+const Web3 = require('web3');
+
 export default function Home() {
 
     const [account, setaccount] = useState('');
@@ -11,6 +16,8 @@ export default function Home() {
     const [decimals, setdecimals] = useState('');
     const [amounts, setamounts] = useState('');
     const [selected, setselected] = useState('');
+    const [list, setlist] = useState([]);
+    const [defaultTab, setdefaultTab] = useState('first');
 
     const connectWallet = async () => {
         const accoutlist = await Accounts.accountlist();
@@ -34,6 +41,76 @@ export default function Home() {
     const handleRadio = (e) => {
         setselected(e.target.value)
     }
+    const getChildrenMsg = (data) => {
+        setlist(data)
+        console.log(data)
+        let str='';
+        data.map(item=>{
+            str+=`${item.Address},${item.Amount} \n`;
+        })
+        setamounts(str)
+    }
+    const nextPage = () =>{
+
+        let amountlist = amounts.split('\n');
+        let arr=[];
+        amountlist.map(item=>{
+            if(!item)return;
+            arr.push({
+                address:item.split(',')[0],
+                amount: parseInt(item.split(',')[1]),
+            })
+        })
+
+        let obj={
+            token,
+            decimals,
+            transaction:arr
+        }
+        console.log("=====",obj)
+
+
+        web3Connect()
+        setdefaultTab('second')
+
+    }
+    const web3Connect = async () =>{
+        var web3 = new Web3(Web3.givenProvider );
+        console.log(web3.eth,senderAbi)
+
+
+
+        // const acc = await web3.eth.getAccounts();
+        // console.log(acc)
+        //
+        // let abi = web3.eth.abi.encodeFunctionSignature('myMethod(uint256,string)')
+        // console.log("===",abi)
+        //
+        //
+        //
+        // const Multisend = new web3.eth.Contract(
+        //     contract_consts.bulksendContractDetails.ABI,
+        //     contract_consts.bulksendContractDetails.contractAddress)
+        // console.log(Multisend)
+        //
+        // // 0x6317f2331ce31ca51b9ed439b62df697d306ca82
+        // const address = '0x6317f2331ce31ca51b9ed439b62df697d306ca82'
+        // const ethBalance = await web3.eth.getBalance(address);
+        // const owner = await Multisend.methods.owner().call();
+        // console.log(ethBalance,owner)
+        //
+        const merkleAirdrop = new web3.eth.Contract(senderAbi, senderAddress.sender)
+        console.log('merkleAirdrop',merkleAirdrop)
+        const numAirdrop = await merkleAirdrop.methods.batchSendToken().call();
+        console.log('numAirdrop',numAirdrop)
+        //
+        // const uriPromises = []
+        // for (let i = 1; i <= numAirdrop; i++) {
+        //     uriPromises.push(merkleAirdrop.methods.airdrops(i).call());
+        // }
+        // const airdrops = await Promise.all(uriPromises);
+        // console.log('airdrops', airdrops);
+    }
 
     return (
         <div className='homeBrdr'>
@@ -41,12 +118,11 @@ export default function Home() {
                 {
                     !account && <Button variant="primary"  onClick={connectWallet}>connect Wallet</Button>
                 }
-
                 {
                     account && <span>{account}</span>
                 }
             </div>
-            <Tabs defaultActiveKey="first" >
+            <Tabs activeKey={defaultTab}    onSelect={(k) => setdefaultTab(k)}>
                 <Tab eventKey="first" title="Step1. Prepare">
                     <div className="container ">
                         <div className="row">
@@ -72,10 +148,7 @@ export default function Home() {
                         </div>
                         <div className="row">
                             <div className="col-12">
-                                {/*<div>*/}
-                                {/*    <Button variant="primary"  onClick={UploadFile}>Upload</Button>*/}
-                                {/*</div>*/}
-                                <Excel />
+                                <Excel getChildrenMsg={getChildrenMsg}/>
                                 <Form.Group controlId="exampleForm.ControlTextarea1">
                                     <Form.Label>Addresses with Amounts</Form.Label>
                                     <Form.Control
@@ -86,9 +159,7 @@ export default function Home() {
                                         onChange={handleInput}/>
                                 </Form.Group>
                                 <div>
-                                    <Button variant="primary">
-                                        Next
-                                    </Button>
+                                    <Button variant="primary" onClick={nextPage}>Next</Button>
                                 </div>
                             </div>
                         </div>
