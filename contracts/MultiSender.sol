@@ -14,7 +14,7 @@ contract MultiSender is Ownable {
     ) public returns (bool success) {
         IERC20 token = IERC20(_token);
         for (uint256 i = 0; i < _targets.length; i++) {
-            require(token.transfer(_targets[i], _amount[i]));
+            require(token.transferFrom(msg.sender, _targets[i], _amount[i]));
         }
         return true;
     }
