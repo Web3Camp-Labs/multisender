@@ -57,12 +57,12 @@ contract('MultiSender Contract', accounts => {
             totalAmount = totalAmount.add(elem);
         }
 
-        console.log("Total Amount: ", totalAmount);
+        // console.log("Total Amount: ", totalAmount);
 
         await token.approve(sender.address, totalAmount);
 
         const res = await sender.batchSendToken(token.address, receivers, amounts);
-        console.log("result : ", res);
+        // console.log("result : ", res);
 
         let index = 0;
         for (const elem of receivers) {
