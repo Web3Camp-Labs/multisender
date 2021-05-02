@@ -28,6 +28,12 @@ require('dotenv').config()
 
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
+const keys = {
+  api: process.env.INFURA,
+  kovan: process.env.KOVAN_KEY,
+  main: process.env.MAIN_KEY,
+}
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -46,6 +52,34 @@ module.exports = {
       port: 9545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
       gasPrice: 150 * 1e9    // 150 Gwei
+    },
+
+    kovan: {
+      provider: () => new HDWalletProvider(
+        keys.kovan,
+        `https://kovan.infura.io/v3/${keys.api}`,
+      ),
+      network_id: 42,       // Kovan's id
+      gas: 5500000,
+      gasPrice: 40000000000, // https://kovan.etherscan.io/chart/gasprice
+      confirmations: 0,    // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 10,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true,     // Skip dry run before migrations? (default: false for public nets )
+      networkCheckTimeout: 10000
+    },
+
+    mainnet: {
+      provider: () => new HDWalletProvider(
+        keys.main,
+        `https://mainnet.infura.io/v3/${keys.api}`,
+      ),
+      network_id: 1,         // Mainnet's id
+      gas: 55000,            // A tight gas limit, original 5500000
+      gasPrice: 120_000_000_000,  // 230 Gwei
+      confirmations: 0,      // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 100,    // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true,      // Skip dry run before migrations? (default: false for public nets )
+      networkCheckTimeout: 30000
     }
 
 
