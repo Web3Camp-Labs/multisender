@@ -20,6 +20,14 @@ module.exports = function (deployer, networkName, accounts) {
 
             const senderBuild = require('../build/contracts/MultiSender.json');
             fs.writeFileSync(`./front-end/src/config/sender.abi.json`, JSON.stringify(senderBuild.abi, null, 4));
+
+
+            let config = {
+                token: token.address,
+                sender: multiSender.address
+            };
+
+            fs.writeFileSync(`./contracts.json`, JSON.stringify(config, null, 4));
         }
     })
 };
