@@ -1,10 +1,9 @@
-$primary:       #d51073 !default;
-
 @import '../../node_modules/bootstrap/scss/bootstrap';
 
 
 body,html{
   color: #000;
+  background: #f5f5f5;
 }
 
 ul,li{
@@ -24,4 +23,8 @@ ul,li{
 textarea{
   resize: none;
 }
+.form-group{
+   text-align: left;
+ }
 
+@import "src/scss/home";

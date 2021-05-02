@@ -4,9 +4,7 @@ import App from './App';
 import './scss/custom.scss';
 
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+    <App />,
   document.getElementById('root')
 );
 
