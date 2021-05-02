@@ -2,3 +2,4 @@ node_modules
 /front-end/yarn.lock
 /.idea/
 build
+package-lock.json
