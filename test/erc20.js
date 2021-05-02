@@ -11,6 +11,9 @@ contract('ERC20 Token', accounts => {
 
   before(async () => {
     token = await ERC20Token.deployed();
+
+    console.log(accounts);
+    
   })
 
   it('should put 1B ERC20 Token in the first account', async () => {
