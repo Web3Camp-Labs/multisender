@@ -7,7 +7,7 @@ module.exports = function (deployer, networkName, accounts) {
 
     deployer.then(async () => {
         if (networkName !== 'mainnet') {
-            await deployer.deploy(ERC20Token, new BN('100000000000').mul(UNIT));
+            await deployer.deploy(ERC20Token, new BN('1000000000').mul(UNIT));
         }
     })
 
