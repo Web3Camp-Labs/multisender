@@ -16,10 +16,10 @@ class Excel extends Component {
                         data = data.concat(XLSX.utils.sheet_to_json(workbook.Sheets[sheet]));
                     }
                 }
-                console.log('上传成功！')
+                console.log('Upload file successful!')
                 this.props.getChildrenMsg(data);
             } catch (e) {
-                console.error('文件类型不正确！');
+                console.error('Unsupported file type!');
             }
         };
         fileReader.readAsBinaryString(files[0]);
@@ -29,7 +29,7 @@ class Excel extends Component {
             <div>
                 <Button className="upload-wrap">
                     <input className="file-uploader" type='file' accept='.xlsx, .xls' onChange={this.onImportExcel} />
-                    <span className="upload-text">上传文件</span>
+                    <span className="upload-text">Upload file</span>
                 </Button>
             </div >
         );
