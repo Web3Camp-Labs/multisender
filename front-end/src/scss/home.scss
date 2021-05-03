@@ -31,3 +31,20 @@
   height: 540px;
   overflow-y: auto;
 }
+
+.loading{
+  display: flex;
+  padding: 50px 25px;
+  .waiting{
+    padding-left: 20px;
+    color: #666;
+  }
+}
+.result{
+  li{
+    padding-left: 10px;
+  }
+  .transaction{
+    margin-bottom: 20px;
+  }
+}

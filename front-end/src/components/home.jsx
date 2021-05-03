@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Tab, Form, Button, Table, Alert } from 'react-bootstrap';
+import { Tabs, Tab, Form, Button, Table, Alert,Modal,Spinner } from 'react-bootstrap';
 import Excel from './excel'
 
 import Accounts from '../api/Account';
@@ -20,8 +20,12 @@ export default function Home() {
     const [list, setlist] = useState([]);
     const [defaultTab, setdefaultTab] = useState('first');
     const [tablelist, settablelist] = useState([]);
-    const [token, settoken] = useState('');
+    const [transactionHash, settransactionHash] = useState([]);
+    const [batchSendToken, setbatchSendToken] = useState([]);
 
+
+
+    const [token, settoken] = useState('');
 
     const [totalAmount, settotalAmount] = useState(0);
     const [addressArray, setaddressArray] = useState([]);
@@ -31,8 +35,11 @@ export default function Home() {
     const [mybalance, setmybalance] = useState(0);
     const [btndisabled,setbtndisabled] = useState(true)
     const [pageSize] = useState(50)
-    const [ethBalance,setethBalance] = useState(0)
+    const [ethBalance,setethBalance] = useState(0);
 
+
+    const [showLoading, setshowLoading] = useState(false);
+    const [tips, settips] = useState('');
     const [show, setShow] = useState(false);
     const [showChange, setshowChange] = useState(false);
     const [showNet, setshowNet] = useState(false);
@@ -121,8 +128,6 @@ export default function Home() {
         console.log("=====", obj)
         setdefaultTab('second')
 
-
-
         const token = await new web3.eth.Contract(tokenAbi, tokenAddress);
         console.log('token address: ', tokenAddress,token);
         settoken(token)
@@ -166,10 +171,7 @@ export default function Home() {
         settotalAmount(totalAmount)
         setaddressArray(addressArray)
         setamountArray(amountArray)
-        console.log("====amountArray,addressArray",amountArray,addressArray)
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
-
-
 
     }
     const getAllowance = async (token) => {
@@ -189,30 +191,64 @@ export default function Home() {
     }
 
     const sendToken = async () => {
+        setshowLoading(true)
+        settips('waiting....')
 
-            console.log(selected)
+        console.log(selected)
         const decimals = await token.methods.decimals().call();
         console.log('Decimals: ', decimals);
 
         // Step-1: Approve
-        const res = await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account });
-        console.log('transactionHash',res);
+        await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data=>{
+            console.log('transactionHash',data);
+            settips('transactionHash')
+            settransactionHash(data.transactionHash)
+        }).catch(err=>{
+            setshowLoading(false)
+        });
 
 
         // Step-2: Sending
+        let transIndex = 0;
+        let batchSendTokenArr = [];
         for (let index = 0; index < addressArray.length; index += pageSize) {
+            transIndex++;
             let addressArr = addressArray.slice(index, index + pageSize);
             let amountArr = amountArray.slice(index, index + pageSize);
-            const res = await mutliSender.methods.batchSendToken(tokenAddress, addressArr, amountArr).send({ from: account });
-            console.log('batchSendToken', res);
+            await mutliSender.methods.batchSendToken(tokenAddress, addressArr, amountArr).send({ from: account })
+                .then(data=>{
+                    console.log('batchSendToken', data);
+                    batchSendTokenArr.push(data.transactionHash)
+                    settips(`batchSendToken (${transIndex}/${Math.ceil(addressArray.length/pageSize)})`)
+                    if(transIndex >= Math.ceil(addressArray.length/pageSize)){
+                        setshowLoading(false)
+                    }
+                }).catch(err=>{
+                    setshowLoading(false)
+                });
 
-            // index += pageSize;
         }
-
+        setbatchSendToken(batchSendTokenArr)
+        setdefaultTab('third')
     }
 
     return (
         <div className='homeBrdr'>
+
+            <Modal
+                show={showLoading}
+                aria-labelledby="contained-modal-title-vcenter"
+                centered
+                onHide={() => {}}
+            >
+                <Modal.Body className='loading'>
+                    <div className="spinner">
+                        <Spinner animation="border" variant="primary" />
+                    </div>
+                    <h4 className="waiting">{tips}</h4>
+                </Modal.Body>
+            </Modal>
+
             {show && <Alert variant="danger" onClose={() => setShow(false)} dismissible>
                 <Alert.Heading>Please install MetaMask!</Alert.Heading>
             </Alert>}
@@ -362,6 +398,22 @@ export default function Home() {
                         <div>
                             <Button variant="primary"  onClick={sendToken}>Submit</Button>
                         </div>
+                    </div>
+                </Tab>
+                <Tab eventKey="third" title="Step3. Result">
+                    <div className="container result">
+                        <h5>transactionHash</h5>
+                        <ul className='transaction'>
+                            {
+                                transactionHash &&<li><a href={`https://kovan.etherscan.io/tx/${transactionHash}`}  target="_blank">{transactionHash}</a></li>
+                            }
+                        </ul>
+                        <h5>batchSendToken</h5>
+                        <ul>
+                            {
+                                batchSendToken && batchSendToken.map(i=>(<li><a href={`https://kovan.etherscan.io/tx/${i}`}  target="_blank">{i}</a></li> ))
+                            }
+                        </ul>
                     </div>
                 </Tab>
             </Tabs>
