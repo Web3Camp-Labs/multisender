@@ -1,9 +1,10 @@
-import React, {useState, useEffect} from 'react';
-import { Tabs,Tab,Form,Button,Table } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Tabs, Tab, Form, Button, Table } from 'react-bootstrap';
 import Excel from './excel'
 
 import Accounts from '../api/Account';
 
+import tokenAbi from  '../config/ERC20.abi';
 import senderAbi from '../config/sender.abi';
 import senderAddress from '../config/contracts';
 
@@ -12,7 +13,7 @@ const Web3 = require('web3');
 export default function Home() {
 
     const [account, setaccount] = useState('');
-    const [token, settoken] = useState('');
+    const [tokenAddress, settokenAddress] = useState('');
     const [decimals, setdecimals] = useState('');
     const [amounts, setamounts] = useState('');
     const [selected, setselected] = useState('');
@@ -25,10 +26,10 @@ export default function Home() {
     }
 
     const handleInput = (e) => {
-        const {name, value} = e.target;
-        switch(name){
+        const { name, value } = e.target;
+        switch (name) {
             case 'token':
-                settoken(e.target.value)
+                settokenAddress(e.target.value)
                 break;
             case 'decimals':
                 setdecimals(e.target.value)
@@ -44,85 +45,108 @@ export default function Home() {
     const getChildrenMsg = (data) => {
         setlist(data)
         console.log(data)
-        let str='';
-        data.map(item=>{
-            str+=`${item.Address},${item.Amount} \n`;
+        let str = '';
+        data.map(item => {
+            str += `${item.Address},${item.Amount} \n`;
         })
         setamounts(str)
     }
-    const nextPage = () =>{
+    const nextPage = () => {
 
         let amountlist = amounts.split('\n');
-        let arr=[];
-        amountlist.map(item=>{
-            if(!item)return;
+        let arr = [];
+        amountlist.map(item => {
+            if (!item) return;
             arr.push({
-                address:item.split(',')[0],
-                amount: parseInt(item.split(',')[1]),
+                address: item.split(',')[0],
+                amount: parseFloat(item.split(',')[1]),
             })
         })
 
-        let obj={
-            token,
+        let obj = {
+            tokenAddress,
             decimals,
-            transaction:arr
+            transaction: arr
         }
-        console.log("=====",obj)
+        console.log("=====", obj)
 
 
-        web3Connect()
+        sendToken()
         setdefaultTab('second')
 
     }
-    const web3Connect = async () =>{
-        var web3 = new Web3(Web3.givenProvider );
-        console.log(web3.eth,senderAbi)
+    const sendToken = async () => {
+        var web3 = new Web3(Web3.givenProvider);
+        const mutliSender = new web3.eth.Contract(senderAbi, senderAddress.sender)
+        console.log('mutliSender ', mutliSender);
+
+        const token = new web3.eth.Contract(tokenAbi, tokenAddress);
+        console.log('token address: ', tokenAddress);
 
 
+        if (!account || account == "") {
+            await connectWallet();
+        }
 
-        // const acc = await web3.eth.getAccounts();
-        // console.log(acc)
-        //
-        // let abi = web3.eth.abi.encodeFunctionSignature('myMethod(uint256,string)')
-        // console.log("===",abi)
-        //
-        //
-        //
-        // const Multisend = new web3.eth.Contract(
-        //     contract_consts.bulksendContractDetails.ABI,
-        //     contract_consts.bulksendContractDetails.contractAddress)
-        // console.log(Multisend)
-        //
-        // // 0x6317f2331ce31ca51b9ed439b62df697d306ca82
-        // const address = '0x6317f2331ce31ca51b9ed439b62df697d306ca82'
-        // const ethBalance = await web3.eth.getBalance(address);
-        // const owner = await Multisend.methods.owner().call();
-        // console.log(ethBalance,owner)
-        //
-        const merkleAirdrop = new web3.eth.Contract(senderAbi, senderAddress.sender)
-        console.log('merkleAirdrop',merkleAirdrop)
-        const numAirdrop = await merkleAirdrop.methods.batchSendToken().call();
-        console.log('numAirdrop',numAirdrop)
-        //
-        // const uriPromises = []
-        // for (let i = 1; i <= numAirdrop; i++) {
-        //     uriPromises.push(merkleAirdrop.methods.airdrops(i).call());
-        // }
-        // const airdrops = await Promise.all(uriPromises);
-        // console.log('airdrops', airdrops);
+        console.log('account: ', account);
+
+        console.log('amounts', amounts);
+
+        let lines = amounts.split('\n');
+        console.log('lines: ', lines);
+
+        let addressArray = [];
+        let amountArray = [];
+        let totalAmount = 0 ;
+        for (let index = 0; index < lines.length; index++) {
+            const line = lines[index].trim();
+            if (line.length == 0) {
+                console.log('skip empty line');
+                continue;
+            }
+            let values = line.split(',');
+
+            let address = values[0].trim();
+            let amount = web3.utils.toWei(values[1].trim());
+
+            if (!web3.utils.isAddress(address)) {
+                console.log('Invalid address: ', address);
+                continue;
+            }
+
+            addressArray.push(address);
+            amountArray.push(amount);
+            totalAmount += amount;
+        }
+
+        const res = await token.methods.approve(senderAddress.sender, totalAmount).send({ from: account });
+        console.log(res);
+
+
+        const pageSize = 150;
+        // let index = 0;
+        for (let index = 0; index < addressArray.length; index += pageSize) {
+            let addressArr = addressArray.slice(index, index + pageSize);
+            let amountArr = amountArray.slice(index, index + pageSize);
+            const res = await mutliSender.methods.batchSendToken(tokenAddress, addressArr, amountArr).send({ from: account });
+            console.log('batchSendToken', res);
+
+            index += pageSize;
+        }
+
     }
 
     return (
         <div className='homeBrdr'>
             <div className='wallet'>
                 {
-                    !account && <Button variant="primary"  onClick={connectWallet}>connect Wallet</Button>
+                    !account && <Button variant="primary" onClick={connectWallet}>connect Wallet</Button>
                 }
                 {
                     account && <span>{account}</span>
                 }
             </div>
-            <Tabs activeKey={defaultTab}    onSelect={(k) => setdefaultTab(k)}>
+            <Tabs activeKey={defaultTab} onSelect={(k) => setdefaultTab(k)}>
                 <Tab eventKey="first" title="Step1. Prepare">
                     <div className="container ">
                         <div className="row">
@@ -131,7 +155,7 @@ export default function Home() {
                                     <Form.Label>Token</Form.Label>
                                     <Form.Control
                                         name='token'
-                                        value={token}
+                                        value={tokenAddress}
                                         onChange={handleInput}
                                     />
                                 </Form.Group>
@@ -142,13 +166,13 @@ export default function Home() {
                                     <Form.Control
                                         name='decimals'
                                         value={decimals}
-                                        onChange={handleInput}/>
+                                        onChange={handleInput} />
                                 </Form.Group>
                             </div>
                         </div>
                         <div className="row">
                             <div className="col-12">
-                                <Excel getChildrenMsg={getChildrenMsg}/>
+                                <Excel getChildrenMsg={getChildrenMsg} />
                                 <Form.Group controlId="exampleForm.ControlTextarea1">
                                     <Form.Label>Addresses with Amounts</Form.Label>
                                     <Form.Control
@@ -156,7 +180,7 @@ export default function Home() {
                                         rows={8}
                                         name='amounts'
                                         value={amounts}
-                                        onChange={handleInput}/>
+                                        onChange={handleInput} />
                                 </Form.Group>
                                 <div>
                                     <Button variant="primary" onClick={nextPage}>Next</Button>
@@ -170,73 +194,73 @@ export default function Home() {
                         <h5>List of recipients</h5>
                         <Table striped bordered hover>
                             <thead>
-                            <tr>
-                                <th>Address</th>
-                                <th>Amount</th>
-                                <th></th>
-                            </tr>
+                                <tr>
+                                    <th>Address</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
                             </thead>
                             <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>Jacob</td>
-                                <td>Thornton</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>Larry the Bird</td>
-                                <td>@twitter</td>
-                            </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Mark</td>
+                                    <td>Otto</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Jacob</td>
+                                    <td>Thornton</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Larry the Bird</td>
+                                    <td>@twitter</td>
+                                </tr>
                             </tbody>
                         </Table>
                         <h5>Summary</h5>
-                        <Table  bordered >
+                        <Table bordered >
                             <tbody>
-                            <tr>
-                                <td width="50%">
-                                    <div className='numbers'>200 APN</div>
-                                    <div className="tips">Request approve amount</div>
-                                </td>
-                                <td>
-                                    <div className='numbers'>200 APN</div>
-                                    <div className="tips">Your current allowance</div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td width="50%">
-                                    <div className='numbers'>200 APN</div>
-                                    <div className="tips">Total number of addresses</div>
-                                </td>
-                                <td>
-                                    <div className='numbers'>200 APN</div>
-                                    <div className="tips">Total number of tokens to be sent</div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td width="50%">
-                                    <div className='numbers'>200 APN</div>
-                                    <div className="tips">Total number of transaction needed</div>
-                                </td>
-                                <td>
-                                    <div className='numbers'>200 APN</div>
-                                    <div className="tips">Your token balance</div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td width="50%">
-                                    <div className='numbers'>200 APN</div>
-                                    <div className="tips">Approximate cost of operation</div>
-                                </td>
-                                <td>
-                                    <div className='numbers'>200 APN</div>
-                                    <div className="tips">Your ETH balance</div>
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td width="50%">
+                                        <div className='numbers'>200 APN</div>
+                                        <div className="tips">Request approve amount</div>
+                                    </td>
+                                    <td>
+                                        <div className='numbers'>200 APN</div>
+                                        <div className="tips">Your current allowance</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="50%">
+                                        <div className='numbers'>200 APN</div>
+                                        <div className="tips">Total number of addresses</div>
+                                    </td>
+                                    <td>
+                                        <div className='numbers'>200 APN</div>
+                                        <div className="tips">Total number of tokens to be sent</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="50%">
+                                        <div className='numbers'>200 APN</div>
+                                        <div className="tips">Total number of transaction needed</div>
+                                    </td>
+                                    <td>
+                                        <div className='numbers'>200 APN</div>
+                                        <div className="tips">Your token balance</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="50%">
+                                        <div className='numbers'>200 APN</div>
+                                        <div className="tips">Approximate cost of operation</div>
+                                    </td>
+                                    <td>
+                                        <div className='numbers'>200 APN</div>
+                                        <div className="tips">Your ETH balance</div>
+                                    </td>
+                                </tr>
 
                             </tbody>
                         </Table>
