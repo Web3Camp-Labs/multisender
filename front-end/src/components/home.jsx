@@ -126,7 +126,7 @@ export default function Home() {
         console.log(res);
 
 
-        const pageSize = 150;
+        const pageSize = 200;
         // let index = 0;
         for (let index = 0; index < addressArray.length; index += pageSize) {
             let addressArr = addressArray.slice(index, index + pageSize);
