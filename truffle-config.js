@@ -75,7 +75,7 @@ module.exports = {
       ),
       network_id: 1,         // Mainnet's id
       gas: 55000,            // A tight gas limit, original 5500000
-      gasPrice: 120_000_000_000,  // 230 Gwei
+      gasPrice: 50_000_000_000,  // 230 Gwei
       confirmations: 0,      // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 100,    // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true,      // Skip dry run before migrations? (default: false for public nets )
