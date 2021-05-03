@@ -13,6 +13,7 @@ const Web3 = require('web3');
 export default function Home() {
 
     const [account, setaccount] = useState('');
+    // eslint-disable-next-line
     const [tokenAddress, settokenAddress] = useState('0xd4342a57ecf2fe7ffa37c33cb8f63b1500e575e6');
     const [decimals, setdecimals] = useState('18');
     const [amounts, setamounts] = useState('');
@@ -59,7 +60,7 @@ export default function Home() {
     });
 
     const connectWallet = async () => {
-        const accoutlist = await Accounts.accountlist().then(data=>{
+        await Accounts.accountlist().then(data=>{
             if(data.type === 'success'){
                 setaccount(data.data)
             } else{
@@ -72,21 +73,21 @@ export default function Home() {
         const { name, value } = e.target;
         switch (name) {
             case 'token':
-                settokenAddress(e.target.value)
+                settokenAddress(value)
                 break;
             case 'decimals':
-                setdecimals(e.target.value)
+                setdecimals(value)
                 break;
             case 'amounts':
-                setamounts(e.target.value)
+                setamounts(value)
                 break;
+            default:break;
         }
     }
     const handleRadio = (e) => {
         setselected(e.target.value)
     }
     const getChildrenMsg = (data) => {
-        // setlist(data)
         console.log(data)
         let str = '';
         data.map(item => {
@@ -194,7 +195,7 @@ export default function Home() {
         console.log('Decimals: ', decimals);
 
         // Step-1: Approve
-        if(true) {
+        if(selected === 'unlimited') {
             const totalSupply = await token.methods.totalSupply().call();
 
             await token.methods.approve(senderAddress.sender, totalSupply).send({ from: account }).then(data=>{
@@ -205,7 +206,6 @@ export default function Home() {
                 setshowLoading(false)
             });
         } else {
-
             await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data=>{
                 console.log('transactionHash',data);
                 settips('transactionHash')
@@ -214,7 +214,7 @@ export default function Home() {
                 setshowLoading(false)
             });
         }
-        
+
         // Step-2: Sending
         let transIndex = 0;
         let batchSendTokenArr = [];
@@ -224,6 +224,7 @@ export default function Home() {
             let amountArr = amountArray.slice(index, index + pageSize);
             await mutliSender.methods.batchSendToken(tokenAddress, addressArr, amountArr).send({ from: account })
                 .then(data=>{
+
                     console.log('batchSendToken', data);
                     batchSendTokenArr.push(data.transactionHash)
                     settips(`batchSendToken (${transIndex}/${Math.ceil(addressArray.length/pageSize)})`)

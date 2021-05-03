@@ -25,7 +25,12 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "array-callback-return": "off",
+      "import/no-anonymous-default-export": "off",
+      "no-loop-func": "off"
+    }
   },
   "browserslist": {
     "production": [
