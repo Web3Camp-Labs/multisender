@@ -46,7 +46,7 @@ module.exports = {
    */
 
   networks: {
-    
+
     development: {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 9545,            // Standard Ethereum port (default: none)
@@ -63,9 +63,9 @@ module.exports = {
       gas: 5500000,
       gasPrice: 40000000000, // https://kovan.etherscan.io/chart/gasprice
       confirmations: 0,    // # of confs to wait between deployments. (default: 0)
-      timeoutBlocks: 10,  // # of blocks before a deployment times out  (minimum/default: 50)
+      timeoutBlocks: 20,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true,     // Skip dry run before migrations? (default: false for public nets )
-      networkCheckTimeout: 10000
+      networkCheckTimeout: 30000
     },
 
     mainnet: {
@@ -80,6 +80,15 @@ module.exports = {
       timeoutBlocks: 100,    // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true,      // Skip dry run before migrations? (default: false for public nets )
       networkCheckTimeout: 30000
+    },
+
+    ropsten: {
+      provider: () => new HDWalletProvider(keys.kovan, `https://ropsten.infura.io/v3/${keys.api}`),
+      network_id: 3,       // Ropsten's id
+      gas: 5500000,        // Ropsten has a lower block limit than mainnet
+      confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     }
 
 
