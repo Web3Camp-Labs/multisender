@@ -4,9 +4,16 @@ import Excel from './excel'
 
 import Accounts from '../api/Account';
 
-import tokenAbi from '../config/ERC20.abi';
-import senderAbi from '../config/sender.abi';
-import senderAddress from '../config/contracts';
+import tokenAbi from '../abi/ERC20.abi';
+import senderAbi from '../abi/sender.abi';
+
+import kovanConfig from '../config/kovan';
+import mainnetConfig from '../config/mainnet';
+
+const contracts = {
+    mainnet: mainnetConfig.sender,
+    kovan: kovanConfig.sender
+}
 
 const Web3 = require('web3');
 
@@ -14,7 +21,7 @@ export default function Home() {
 
     const [account, setaccount] = useState('');
     // eslint-disable-next-line
-    const [tokenAddress, settokenAddress] = useState('0xd4342a57ecf2fe7ffa37c33cb8f63b1500e575e6');
+    const [tokenAddress, settokenAddress] = useState();
     const [decimals, setdecimals] = useState('18');
     const [amounts, setamounts] = useState('');
     const [selected, setselected] = useState('');
@@ -41,9 +48,10 @@ export default function Home() {
     const [showNet, setshowNet] = useState(false);
 
     const web3 = new Web3(Web3.givenProvider);
-    const mutliSender = new web3.eth.Contract(senderAbi, senderAddress.sender)
 
 
+    var mutliSender = null;
+    var senderAddress = null;
 
     window.ethereum.on('accountsChanged', function (arr) {
         setaccount(arr[0])
@@ -52,12 +60,35 @@ export default function Home() {
             setshowChange(false)
         }, 3000)
     });
+
     window.ethereum.on('chainChanged', (chainId) => {
         setshowNet(true)
         setTimeout(() => {
             setshowNet(false)
         }, 3000)
     });
+
+    const getChainId = async() => {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        initContract(chainId);
+    };
+
+    const initContract = async(chainId) => {
+        console.log('chainId', chainId);
+
+        if (chainId == 1) {
+            senderAddress = contracts.mainnet;
+        } else if (chainId == 42) {
+            senderAddress = contracts.kovan;
+        } else {
+            console.error('Unsupported network!!!!');
+            return;
+        }
+
+        console.log("sender address: ", senderAddress);
+
+        mutliSender = await new web3.eth.Contract(senderAbi, senderAddress);
+    };
 
     const connectWallet = async () => {
         await Accounts.accountlist().then(data => {
@@ -171,7 +202,7 @@ export default function Home() {
 
     }
     const getAllowance = async (token) => {
-        const allowance = await token.methods.allowance(account, senderAddress.sender).call();
+        const allowance = await token.methods.allowance(account, senderAddress).call();
         console.log("My allowance: ", web3.utils.fromWei(allowance));
         setallowance(web3.utils.fromWei(allowance))
     }
@@ -199,7 +230,7 @@ export default function Home() {
             if (selected === 'unlimited') {
                 const totalSupply = await token.methods.totalSupply().call();
 
-                await token.methods.approve(senderAddress.sender, totalSupply).send({ from: account }).then(data => {
+                await token.methods.approve(senderAddress, totalSupply).send({ from: account }).then(data => {
                     console.log('transactionHash', data);
                     settips('transactionHash')
                     settransactionHash(data.transactionHash)
@@ -207,7 +238,7 @@ export default function Home() {
                     setshowLoading(false)
                 });
             } else {
-                await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data => {
+                await token.methods.approve(senderAddress, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data => {
                     console.log('transactionHash', data);
                     settips('transactionHash')
                     settransactionHash(data.transactionHash)
@@ -243,6 +274,9 @@ export default function Home() {
         setbatchSendToken(batchSendTokenArr)
         setdefaultTab('third')
     }
+
+
+    getChainId();
 
     return (
         <div className='homeBrdr'>
