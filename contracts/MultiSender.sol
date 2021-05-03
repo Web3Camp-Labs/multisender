@@ -25,7 +25,7 @@ contract MultiSender is Ownable {
         uint256[] memory _amount
     ) public view returns (bool success) {
         IERC20 token = IERC20(_token);
-        uint256 tokenBalance = token.balanceOf(address(this));
+        uint256 tokenBalance = token.balanceOf(msg.sender);
 
         for (uint256 j = 0; j < _targets.length; j++) {
             tokenBalance = tokenBalance - _amount[j];
