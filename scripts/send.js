@@ -21,7 +21,10 @@ const csvFile = `${workdir}/inputs.csv`;
 function loadcsv(path) {
     const input = fs.readFileSync(path, 'utf-8');
     return parse(input, {
+        encoding: 'utf8',
+        trim: true,
         columns: true,
+        auto_parse: true,
         skip_empty_lines: true
     })
 }
@@ -34,12 +37,14 @@ async function main() {
 
     const [account] = await web3.eth.getAccounts();
 
+    console.log('My Account: ', account);
+
     // address,amount...
     let data = loadcsv(csvFile);
 
     // check csv columns
     data = data
-        .map(r => { return { ...r, address: r.address.trim(), amount: parseFloat(r.amount) } })
+        .map(r => { console.log(r.address, r.amount); return { ...r, address: r.address.trim(), amount: parseFloat(r.amount) } })
         .filter(r => r.address && r.amount);
 
     if (data.length == 0) {
@@ -115,15 +120,15 @@ async function main() {
 
         const pageSize = 150;
 
-        for (let index = 0; index < addresses.length; index+=pageSize) {
+        for (let index = 0; index < addresses.length; index += pageSize) {
             console.log(`sending from ${index} to ${index + pageSize}`);
-            const addressArray = addresses.slice(index, index+pageSize);
-            const amountArray = amounts.slice(index, index+pageSize);
+            const addressArray = addresses.slice(index, index + pageSize);
+            const amountArray = amounts.slice(index, index + pageSize);
 
             let res = await senderContract.batchSendToken(tokenContract.address, addressArray, amountArray);
             console.log(`tx: ${res.tx}`);
         }
-        
+
         const balance = await tokenContract.balanceOf(account);
         const mybalance = parseFloat(web3.utils.fromWei(balance));
 
