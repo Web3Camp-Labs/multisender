@@ -411,7 +411,7 @@ export default function Home() {
                         <h5>batchSendToken</h5>
                         <ul>
                             {
-                                batchSendToken && batchSendToken.map(i=>(<li><a href={`https://kovan.etherscan.io/tx/${i}`}  target="_blank">{i}</a></li> ))
+                                batchSendToken && batchSendToken.map(i=>(<li key={i}><a href={`https://kovan.etherscan.io/tx/${i}`}  target="_blank">{i}</a></li> ))
                             }
                         </ul>
                     </div>
