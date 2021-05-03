@@ -93,7 +93,7 @@ export default function Home() {
         console.log('amounts', amounts);
 
         let lines = amounts.split('\n');
-        console.log('lines: ', lines);
+        // console.log('lines: ', lines);
 
         let addressArray = [];
         let amountArray = [];
@@ -116,10 +116,13 @@ export default function Home() {
 
             addressArray.push(address);
             amountArray.push(amount);
-            totalAmount += amount;
+
+            totalAmount += parseFloat(values[1].trim());
         }
 
-        const res = await token.methods.approve(senderAddress.sender, totalAmount).send({ from: account });
+        console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
+
+        const res = await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account });
         console.log(res);
 
 
