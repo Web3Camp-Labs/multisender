@@ -95,6 +95,23 @@ async function main() {
     }
 
     {
+        let pageSize = 200;
+        for (let index = 0; index < addresses.length; index += pageSize) {
+            const addressArray = addresses.slice(index, index + pageSize);
+            const amountArray = amounts.slice(index, index + pageSize);
+            const path = `./data/${index + 1}-${index + pageSize}.txt`;
+
+            let content = '';
+            for (let i = 0; i < addressArray.length; i++) {
+                const address = addressArray[i];
+                const amount = web3.utils.fromWei(amountArray[i]);
+                content += `${address},${amount}\n`;
+            }
+            fs.writeFileSync(path, content);
+        }
+    }
+
+    {
         const balance = await tokenContract.balanceOf(account);
         const mybalance = parseFloat(web3.utils.fromWei(balance));
 
