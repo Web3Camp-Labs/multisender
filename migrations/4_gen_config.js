@@ -27,7 +27,7 @@ module.exports = function (deployer, networkName, accounts) {
                 sender: multiSender.address
             };
 
-            fs.writeFileSync(`./contracts.json`, JSON.stringify(config, null, 4));
+            fs.writeFileSync(`./contracts-${networkName}.json`, JSON.stringify(config, null, 4));
         }
     })
 };
