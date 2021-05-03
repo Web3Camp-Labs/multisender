@@ -122,12 +122,26 @@ export default function Home() {
 
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
 
+        // Step-0: Get information
+        const allowance = await token.methods.allowance(account, senderAddress.sender).call();
+        console.log("My allowance: ", web3.utils.fromWei(allowance));
+
+        const mybalance = await token.methods.balanceOf(account).call();
+        console.log("My balance: ", web3.utils.fromWei(mybalance));
+
+        const symbol = await token.methods.symbol().call();
+        console.log('Token symbol: ', symbol);
+
+        const decimals = await token.methods.decimals().call();
+        console.log('Decimals: ', decimals);
+
+        // Step-1: Approve 
         const res = await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account });
         console.log(res);
 
 
+        // Step-2: Sending
         const pageSize = 200;
-        // let index = 0;
         for (let index = 0; index < addressArray.length; index += pageSize) {
             let addressArr = addressArray.slice(index, index + pageSize);
             let amountArr = amountArray.slice(index, index + pageSize);
