@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Tab, Form, Button, Table, Alert,Modal,Spinner } from 'react-bootstrap';
+import { Tabs, Tab, Form, Button, Table, Alert, Modal, Spinner } from 'react-bootstrap';
 import Excel from './excel'
 
 import Accounts from '../api/Account';
 
-import tokenAbi from  '../config/ERC20.abi';
+import tokenAbi from '../config/ERC20.abi';
 import senderAbi from '../config/sender.abi';
 import senderAddress from '../config/contracts';
 
@@ -31,9 +31,9 @@ export default function Home() {
     const [allowance, setallowance] = useState(0);
     const [symbol, setsymbol] = useState('');
     const [mybalance, setmybalance] = useState(0);
-    const [btndisabled,setbtndisabled] = useState(true)
+    const [btndisabled, setbtndisabled] = useState(true)
     const [pageSize] = useState(200)
-    const [ethBalance,setethBalance] = useState(0)
+    const [ethBalance, setethBalance] = useState(0)
     const [showLoading, setshowLoading] = useState(false);
     const [tips, settips] = useState('');
     const [show, setShow] = useState(false);
@@ -48,22 +48,22 @@ export default function Home() {
     window.ethereum.on('accountsChanged', function (arr) {
         setaccount(arr[0])
         setshowChange(true)
-        setTimeout(()=>{
+        setTimeout(() => {
             setshowChange(false)
-        },3000)
+        }, 3000)
     });
     window.ethereum.on('chainChanged', (chainId) => {
         setshowNet(true)
-        setTimeout(()=>{
+        setTimeout(() => {
             setshowNet(false)
-        },3000)
+        }, 3000)
     });
 
     const connectWallet = async () => {
-        await Accounts.accountlist().then(data=>{
-            if(data.type === 'success'){
+        await Accounts.accountlist().then(data => {
+            if (data.type === 'success') {
                 setaccount(data.data)
-            } else{
+            } else {
                 setShow(true)
             }
         });
@@ -81,7 +81,7 @@ export default function Home() {
             case 'amounts':
                 setamounts(value)
                 break;
-            default:break;
+            default: break;
         }
     }
     const handleRadio = (e) => {
@@ -95,14 +95,14 @@ export default function Home() {
         })
         setamounts(str)
     }
-    useEffect(()=>{
+    useEffect(() => {
         if (!account || account === "" || !amounts || !tokenAddress || !decimals) {
             setbtndisabled(true)
 
-        }else{
+        } else {
             setbtndisabled(false)
         }
-    },[account,amounts,tokenAddress,decimals])
+    }, [account, amounts, tokenAddress, decimals])
     const nextPage = async () => {
 
         let amountlist = amounts.split('\n');
@@ -125,7 +125,7 @@ export default function Home() {
         setdefaultTab('second')
 
         const token = await new web3.eth.Contract(tokenAbi, tokenAddress);
-        console.log('token address: ', tokenAddress,token);
+        console.log('token address: ', tokenAddress, token);
         settoken(token)
 
         setTotal()
@@ -134,15 +134,15 @@ export default function Home() {
         getBalanceOf(token)
 
         const ethBalance = await web3.eth.getBalance(account);
-        console.log("==============ethBalance",ethBalance,)
+        console.log("==============ethBalance", ethBalance,)
         setethBalance(web3.utils.fromWei(ethBalance))
 
     }
-    const setTotal =()=>{
+    const setTotal = () => {
         let lines = amounts.split('\n');
         let addressArray = [];
         let amountArray = [];
-        let totalAmount = 0 ;
+        let totalAmount = 0;
         for (let index = 0; index < lines.length; index++) {
             const line = lines[index].trim();
             if (line.length === 0) {
@@ -175,12 +175,12 @@ export default function Home() {
         console.log("My allowance: ", web3.utils.fromWei(allowance));
         setallowance(web3.utils.fromWei(allowance))
     }
-    const getSymbol= async (token) => {
+    const getSymbol = async (token) => {
         const symbol = await token.methods.symbol().call();
         console.log('Token symbol: ', symbol);
         setsymbol(symbol)
     }
-    const getBalanceOf= async (token) => {
+    const getBalanceOf = async (token) => {
         const mybalance = await token.methods.balanceOf(account).call();
         console.log("My balance: ", web3.utils.fromWei(mybalance));
         setmybalance(web3.utils.fromWei(mybalance))
@@ -195,24 +195,28 @@ export default function Home() {
         console.log('Decimals: ', decimals);
 
         // Step-1: Approve
-        if(selected === 'unlimited') {
-            const totalSupply = await token.methods.totalSupply().call();
+        if (allowance < totalAmount) {
+            if (selected === 'unlimited') {
+                const totalSupply = await token.methods.totalSupply().call();
 
-            await token.methods.approve(senderAddress.sender, totalSupply).send({ from: account }).then(data=>{
-                console.log('transactionHash',data);
-                settips('transactionHash')
-                settransactionHash(data.transactionHash)
-            }).catch(err=>{
-                setshowLoading(false)
-            });
+                await token.methods.approve(senderAddress.sender, totalSupply).send({ from: account }).then(data => {
+                    console.log('transactionHash', data);
+                    settips('transactionHash')
+                    settransactionHash(data.transactionHash)
+                }).catch(err => {
+                    setshowLoading(false)
+                });
+            } else {
+                await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data => {
+                    console.log('transactionHash', data);
+                    settips('transactionHash')
+                    settransactionHash(data.transactionHash)
+                }).catch(err => {
+                    setshowLoading(false)
+                });
+            }
         } else {
-            await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data=>{
-                console.log('transactionHash',data);
-                settips('transactionHash')
-                settransactionHash(data.transactionHash)
-            }).catch(err=>{
-                setshowLoading(false)
-            });
+            console.log('Already have enough allowance!');
         }
 
         // Step-2: Sending
@@ -223,15 +227,15 @@ export default function Home() {
             let addressArr = addressArray.slice(index, index + pageSize);
             let amountArr = amountArray.slice(index, index + pageSize);
             await mutliSender.methods.batchSendToken(tokenAddress, addressArr, amountArr).send({ from: account })
-                .then(data=>{
+                .then(data => {
 
                     console.log('batchSendToken', data);
                     batchSendTokenArr.push(data.transactionHash)
-                    settips(`batchSendToken (${transIndex}/${Math.ceil(addressArray.length/pageSize)})`)
-                    if(transIndex >= Math.ceil(addressArray.length/pageSize)){
+                    settips(`batchSendToken (${transIndex}/${Math.ceil(addressArray.length / pageSize)})`)
+                    if (transIndex >= Math.ceil(addressArray.length / pageSize)) {
                         setshowLoading(false)
                     }
-                }).catch(err=>{
+                }).catch(err => {
                     setshowLoading(false)
                 });
 
@@ -247,7 +251,7 @@ export default function Home() {
                 show={showLoading}
                 aria-labelledby="contained-modal-title-vcenter"
                 centered
-                onHide={() => {}}
+                onHide={() => { }}
             >
                 <Modal.Body className='loading'>
                     <div className="spinner">
@@ -324,18 +328,18 @@ export default function Home() {
                         <div className='tableBrdr'>
                             <Table striped bordered hover>
                                 <thead>
-                                <tr>
-                                    <th>Address</th>
-                                    <th>Amount</th>
-                                </tr>
+                                    <tr>
+                                        <th>Address</th>
+                                        <th>Amount</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                {
-                                    tablelist.map((i,index)=>(<tr key={`${i.address}_${index}`}>
-                                        <td>{i.address}</td>
-                                        <td>{i.amount}</td>
-                                    </tr>))
-                                }
+                                    {
+                                        tablelist.map((i, index) => (<tr key={`${i.address}_${index}`}>
+                                            <td>{i.address}</td>
+                                            <td>{i.amount}</td>
+                                        </tr>))
+                                    }
                                 </tbody>
                             </Table>
                         </div>
@@ -365,7 +369,7 @@ export default function Home() {
                                 </tr>
                                 <tr>
                                     <td width="50%">
-                                        <div className='numbers'>{ Math.ceil(addressArray.length/pageSize)}</div>
+                                        <div className='numbers'>{Math.ceil(addressArray.length / pageSize)}</div>
                                         <div className="tips">Total number of transaction needed</div>
                                     </td>
                                     <td>
@@ -404,7 +408,7 @@ export default function Home() {
                             />
                         </Form.Group>
                         <div>
-                            <Button variant="primary"  onClick={sendToken}>Submit</Button>
+                            <Button variant="primary" onClick={sendToken}>Submit</Button>
                         </div>
                     </div>
                 </Tab>
@@ -413,13 +417,13 @@ export default function Home() {
                         <h5>transactionHash</h5>
                         <ul className='transaction'>
                             {
-                                transactionHash &&<li><a href={`https://kovan.etherscan.io/tx/${transactionHash}`}  target="_blank"  rel="noopener noreferrer">{transactionHash}</a></li>
+                                transactionHash && <li><a href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank" rel="noopener noreferrer">{transactionHash}</a></li>
                             }
                         </ul>
                         <h5>batchSendToken</h5>
                         <ul>
                             {
-                                batchSendToken && batchSendToken.map(i=>(<li key={i}><a href={`https://kovan.etherscan.io/tx/${i}`}  target="_blank"  rel="noopener noreferrer">{i}</a></li> ))
+                                batchSendToken && batchSendToken.map(i => (<li key={i}><a href={`https://kovan.etherscan.io/tx/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
                             }
                         </ul>
                     </div>
