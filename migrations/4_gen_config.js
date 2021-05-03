@@ -23,7 +23,7 @@ module.exports = function (deployer, networkName, accounts) {
 
 
             let config = {
-                token: token.address,
+                token: erc20Token.address,
                 sender: multiSender.address
             };
 
