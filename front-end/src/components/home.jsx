@@ -21,7 +21,7 @@ export default function Home() {
 
     const [account, setaccount] = useState('');
     // eslint-disable-next-line
-    const [tokenAddress, settokenAddress] = useState();
+    const [tokenAddress, settokenAddress] = useState('');
     const [decimals, setdecimals] = useState('18');
     const [amounts, setamounts] = useState('');
     const [selected, setselected] = useState('');
@@ -69,7 +69,7 @@ export default function Home() {
     });
 
     const getChainId = async() => {
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        const chainId = await web3.eth.getChainId();
         initContract(chainId);
     };
 
