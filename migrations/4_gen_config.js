@@ -13,14 +13,13 @@ module.exports = function (deployer, networkName, accounts) {
                 sender: multiSender.address
             };
 
-            fs.writeFileSync(`./front-end/src/config/contracts.json`, JSON.stringify(contracts, null, 4));
+            fs.writeFileSync(`./front-end/src/config/${networkName}.json`, JSON.stringify(contracts, null, 4));
 
             const erc20Build = require('../build/contracts/ERC20Token.json');
-            fs.writeFileSync(`./front-end/src/config/ERC20.abi.json`, JSON.stringify(erc20Build.abi, null, 4));
+            fs.writeFileSync(`./front-end/src/abi/ERC20.abi.json`, JSON.stringify(erc20Build.abi, null, 4));
 
             const senderBuild = require('../build/contracts/MultiSender.json');
-            fs.writeFileSync(`./front-end/src/config/sender.abi.json`, JSON.stringify(senderBuild.abi, null, 4));
-
+            fs.writeFileSync(`./front-end/src/abi/sender.abi.json`, JSON.stringify(senderBuild.abi, null, 4));
 
             let config = {
                 token: erc20Token.address,
