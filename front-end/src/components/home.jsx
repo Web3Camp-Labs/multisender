@@ -17,13 +17,11 @@ export default function Home() {
     const [decimals, setdecimals] = useState('18');
     const [amounts, setamounts] = useState('');
     const [selected, setselected] = useState('');
-    const [list, setlist] = useState([]);
+    // const [list, setlist] = useState([]);
     const [defaultTab, setdefaultTab] = useState('first');
     const [tablelist, settablelist] = useState([]);
     const [transactionHash, settransactionHash] = useState([]);
     const [batchSendToken, setbatchSendToken] = useState([]);
-
-
 
     const [token, settoken] = useState('');
 
@@ -91,7 +89,7 @@ export default function Home() {
         setselected(e.target.value)
     }
     const getChildrenMsg = (data) => {
-        setlist(data)
+        // setlist(data)
         console.log(data)
         let str = '';
         data.map(item => {
@@ -100,7 +98,7 @@ export default function Home() {
         setamounts(str)
     }
     useEffect(()=>{
-        if (!account || account == "" || !amounts || !tokenAddress || !decimals) {
+        if (!account || account === "" || !amounts || !tokenAddress || !decimals) {
             setbtndisabled(true)
 
         }else{
@@ -149,7 +147,7 @@ export default function Home() {
         let totalAmount = 0 ;
         for (let index = 0; index < lines.length; index++) {
             const line = lines[index].trim();
-            if (line.length == 0) {
+            if (line.length === 0) {
                 console.log('skip empty line');
                 continue;
             }
@@ -405,13 +403,13 @@ export default function Home() {
                         <h5>transactionHash</h5>
                         <ul className='transaction'>
                             {
-                                transactionHash &&<li><a href={`https://kovan.etherscan.io/tx/${transactionHash}`}  target="_blank">{transactionHash}</a></li>
+                                transactionHash &&<li><a href={`https://kovan.etherscan.io/tx/${transactionHash}`}  target="_blank"  rel="noopener noreferrer">{transactionHash}</a></li>
                             }
                         </ul>
                         <h5>batchSendToken</h5>
                         <ul>
                             {
-                                batchSendToken && batchSendToken.map(i=>(<li key={i}><a href={`https://kovan.etherscan.io/tx/${i}`}  target="_blank">{i}</a></li> ))
+                                batchSendToken && batchSendToken.map(i=>(<li key={i}><a href={`https://kovan.etherscan.io/tx/${i}`}  target="_blank"  rel="noopener noreferrer">{i}</a></li> ))
                             }
                         </ul>
                     </div>
