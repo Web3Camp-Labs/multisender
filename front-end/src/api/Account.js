@@ -1,24 +1,18 @@
-
 const accountlist = async () => {
     const { ethereum } = window;
-    if (typeof ethereum == 'undefined') return ;
-
+    if (typeof ethereum == 'undefined') {
+        return {
+            type:'error'
+        } ;
+    }
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    return accounts[0];
-
-    // if (window.web3) {
-    //     window.web3 = new Web3(window.web3.currentProvider);
-    //     window.ethereum.enable();
-    //     return true;
-    // }
-    // return false;
-
+    return {
+        type:'success',
+        data: accounts[0]
+     }
 
 }
 
 export default {
     accountlist,
-    // accountAddress,
-    // accountName,
-    // accountInjector,
 }

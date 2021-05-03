@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Tab, Form, Button, Table } from 'react-bootstrap';
+import { Tabs, Tab, Form, Button, Table, Alert } from 'react-bootstrap';
 import Excel from './excel'
 
 import Accounts from '../api/Account';
@@ -13,16 +13,57 @@ const Web3 = require('web3');
 export default function Home() {
 
     const [account, setaccount] = useState('');
-    const [tokenAddress, settokenAddress] = useState('');
-    const [decimals, setdecimals] = useState('');
+    const [tokenAddress, settokenAddress] = useState('0xBB02889B46F134942F50850bd5480348270Ea1e4');
+    const [decimals, setdecimals] = useState('18');
     const [amounts, setamounts] = useState('');
     const [selected, setselected] = useState('');
     const [list, setlist] = useState([]);
     const [defaultTab, setdefaultTab] = useState('first');
+    const [tablelist, settablelist] = useState([]);
+    const [token, settoken] = useState('');
+
+
+    const [totalAmount, settotalAmount] = useState(0);
+    const [addressArray, setaddressArray] = useState([]);
+    const [amountArray, setamountArray] = useState([]);
+    const [allowance, setallowance] = useState(0);
+    const [symbol, setsymbol] = useState('');
+    const [mybalance, setmybalance] = useState(0);
+    const [btndisabled,setbtndisabled] = useState(true)
+    const [pageSize] = useState(50)
+    const [ethBalance,setethBalance] = useState(0)
+
+    const [show, setShow] = useState(false);
+    const [showChange, setshowChange] = useState(false);
+    const [showNet, setshowNet] = useState(false);
+
+    const web3 = new Web3(Web3.givenProvider);
+    const mutliSender = new web3.eth.Contract(senderAbi, senderAddress.sender)
+
+
+
+    window.ethereum.on('accountsChanged', function (arr) {
+        setaccount(arr[0])
+        setshowChange(true)
+        setTimeout(()=>{
+            setshowChange(false)
+        },3000)
+    });
+    window.ethereum.on('chainChanged', (chainId) => {
+        setshowNet(true)
+        setTimeout(()=>{
+            setshowNet(false)
+        },3000)
+    });
 
     const connectWallet = async () => {
-        const accoutlist = await Accounts.accountlist();
-        setaccount(accoutlist)
+        const accoutlist = await Accounts.accountlist().then(data=>{
+            if(data.type === 'success'){
+                setaccount(data.data)
+            } else{
+                setShow(true)
+            }
+        });
     }
 
     const handleInput = (e) => {
@@ -51,7 +92,15 @@ export default function Home() {
         })
         setamounts(str)
     }
-    const nextPage = () => {
+    useEffect(()=>{
+        if (!account || account == "" || !amounts || !tokenAddress || !decimals) {
+            setbtndisabled(true)
+
+        }else{
+            setbtndisabled(false)
+        }
+    },[account,amounts,tokenAddress,decimals])
+    const nextPage = async () => {
 
         let amountlist = amounts.split('\n');
         let arr = [];
@@ -68,33 +117,28 @@ export default function Home() {
             decimals,
             transaction: arr
         }
+        settablelist(arr)
         console.log("=====", obj)
-
-
-        sendToken()
         setdefaultTab('second')
 
+
+
+        const token = await new web3.eth.Contract(tokenAbi, tokenAddress);
+        console.log('token address: ', tokenAddress,token);
+        settoken(token)
+
+        setTotal()
+        getAllowance(token)
+        getSymbol(token)
+        getBalanceOf(token)
+
+        const ethBalance = await web3.eth.getBalance(account);
+        console.log("==============ethBalance",ethBalance,)
+        setethBalance(web3.utils.fromWei(ethBalance))
+
     }
-    const sendToken = async () => {
-        var web3 = new Web3(Web3.givenProvider);
-        const mutliSender = new web3.eth.Contract(senderAbi, senderAddress.sender)
-        console.log('mutliSender ', mutliSender);
-
-        const token = new web3.eth.Contract(tokenAbi, tokenAddress);
-        console.log('token address: ', tokenAddress);
-
-
-        if (!account || account == "") {
-            await connectWallet();
-        }
-
-        console.log('account: ', account);
-
-        console.log('amounts', amounts);
-
+    const setTotal =()=>{
         let lines = amounts.split('\n');
-        // console.log('lines: ', lines);
-
         let addressArray = [];
         let amountArray = [];
         let totalAmount = 0 ;
@@ -119,42 +163,66 @@ export default function Home() {
 
             totalAmount += parseFloat(values[1].trim());
         }
-
+        settotalAmount(totalAmount)
+        setaddressArray(addressArray)
+        setamountArray(amountArray)
+        console.log("====amountArray,addressArray",amountArray,addressArray)
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
 
-        // Step-0: Get information
+
+
+    }
+    const getAllowance = async (token) => {
         const allowance = await token.methods.allowance(account, senderAddress.sender).call();
         console.log("My allowance: ", web3.utils.fromWei(allowance));
-
-        const mybalance = await token.methods.balanceOf(account).call();
-        console.log("My balance: ", web3.utils.fromWei(mybalance));
-
+        setallowance(web3.utils.fromWei(allowance))
+    }
+    const getSymbol= async (token) => {
         const symbol = await token.methods.symbol().call();
         console.log('Token symbol: ', symbol);
+        setsymbol(symbol)
+    }
+    const getBalanceOf= async (token) => {
+        const mybalance = await token.methods.balanceOf(account).call();
+        console.log("My balance: ", web3.utils.fromWei(mybalance));
+        setmybalance(web3.utils.fromWei(mybalance))
+    }
 
+    const sendToken = async () => {
+
+            console.log(selected)
         const decimals = await token.methods.decimals().call();
         console.log('Decimals: ', decimals);
 
-        // Step-1: Approve 
+        // Step-1: Approve
         const res = await token.methods.approve(senderAddress.sender, web3.utils.toWei(totalAmount.toString())).send({ from: account });
-        console.log(res);
+        console.log('transactionHash',res);
 
 
         // Step-2: Sending
-        const pageSize = 200;
         for (let index = 0; index < addressArray.length; index += pageSize) {
             let addressArr = addressArray.slice(index, index + pageSize);
             let amountArr = amountArray.slice(index, index + pageSize);
             const res = await mutliSender.methods.batchSendToken(tokenAddress, addressArr, amountArr).send({ from: account });
             console.log('batchSendToken', res);
 
-            index += pageSize;
+            // index += pageSize;
         }
 
     }
 
     return (
         <div className='homeBrdr'>
+            {show && <Alert variant="danger" onClose={() => setShow(false)} dismissible>
+                <Alert.Heading>Please install MetaMask!</Alert.Heading>
+            </Alert>}
+            {
+                showChange && <Alert variant="success">Account was changed</Alert>
+            }
+            {
+                showNet && <Alert variant="success">Chain was changed</Alert>
+            }
+
             <div className='wallet'>
                 {
                     !account && <Button variant="primary" onClick={connectWallet}>connect Wallet</Button>
@@ -200,7 +268,7 @@ export default function Home() {
                                         onChange={handleInput} />
                                 </Form.Group>
                                 <div>
-                                    <Button variant="primary" onClick={nextPage}>Next</Button>
+                                    <Button variant="primary" onClick={nextPage} disabled={btndisabled}>Next</Button>
                                 </div>
                             </div>
                         </div>
@@ -209,72 +277,65 @@ export default function Home() {
                 <Tab eventKey="second" title="Step2. Confirm">
                     <div className="container">
                         <h5>List of recipients</h5>
-                        <Table striped bordered hover>
-                            <thead>
+                        <div className='tableBrdr'>
+                            <Table striped bordered hover>
+                                <thead>
                                 <tr>
                                     <th>Address</th>
                                     <th>Amount</th>
-                                    <th></th>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>Mark</td>
-                                    <td>Otto</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>Jacob</td>
-                                    <td>Thornton</td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>Larry the Bird</td>
-                                    <td>@twitter</td>
-                                </tr>
-                            </tbody>
-                        </Table>
+                                </thead>
+                                <tbody>
+                                {
+                                    tablelist.map((i,index)=>(<tr key={`${i.address}_${index}`}>
+                                        <td>{i.address}</td>
+                                        <td>{i.amount}</td>
+                                    </tr>))
+                                }
+                                </tbody>
+                            </Table>
+                        </div>
+
                         <h5>Summary</h5>
                         <Table bordered >
                             <tbody>
                                 <tr>
                                     <td width="50%">
-                                        <div className='numbers'>200 APN</div>
+                                        <div className='numbers'>{totalAmount} {symbol}</div>
                                         <div className="tips">Request approve amount</div>
                                     </td>
                                     <td>
-                                        <div className='numbers'>200 APN</div>
+                                        <div className='numbers'>{allowance} {symbol}</div>
                                         <div className="tips">Your current allowance</div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td width="50%">
-                                        <div className='numbers'>200 APN</div>
+                                        <div className='numbers'>{addressArray.length}</div>
                                         <div className="tips">Total number of addresses</div>
                                     </td>
                                     <td>
-                                        <div className='numbers'>200 APN</div>
+                                        <div className='numbers'>{totalAmount} {symbol}</div>
                                         <div className="tips">Total number of tokens to be sent</div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td width="50%">
-                                        <div className='numbers'>200 APN</div>
+                                        <div className='numbers'>{ Math.ceil(addressArray.length/pageSize)}</div>
                                         <div className="tips">Total number of transaction needed</div>
                                     </td>
                                     <td>
-                                        <div className='numbers'>200 APN</div>
+                                        <div className='numbers'>{mybalance} {symbol}</div>
                                         <div className="tips">Your token balance</div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td width="50%">
-                                        <div className='numbers'>200 APN</div>
+                                        <div className='numbers' />
                                         <div className="tips">Approximate cost of operation</div>
                                     </td>
                                     <td>
-                                        <div className='numbers'>200 APN</div>
+                                        <div className='numbers'>{ethBalance} ETH</div>
                                         <div className="tips">Your ETH balance</div>
                                     </td>
                                 </tr>
@@ -286,22 +347,20 @@ export default function Home() {
                             <Form.Check
                                 type="radio"
                                 label="Extra amount to sent"
-                                name='radioGroup'
+                                name='approveAmount'
                                 onChange={handleRadio}
                                 value='extra'
                             />
                             <Form.Check
                                 type="radio"
                                 label="Unlimited amount"
-                                name='radioGroup'
+                                name='approveAmount'
                                 value='unlimited'
                                 onChange={handleRadio}
                             />
                         </Form.Group>
                         <div>
-                            <Button variant="primary">
-                                Next
-                            </Button>
+                            <Button variant="primary"  onClick={sendToken}>Submit</Button>
                         </div>
                     </div>
                 </Tab>
