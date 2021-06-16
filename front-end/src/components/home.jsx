@@ -10,9 +10,14 @@ import senderAbi from '../abi/sender.abi';
 import kovanConfig from '../config/kovan';
 import mainnetConfig from '../config/mainnet';
 
+import hecoConfig from '../config/heco';
+import hecotestConfig from '../config/hecotest';
+
 const contracts = {
     mainnet: mainnetConfig.sender,
-    kovan: kovanConfig.sender
+    kovan: kovanConfig.sender,
+    heco: hecoConfig.sender,
+    hecotest: hecotestConfig.sender
 }
 
 const Web3 = require('web3');
@@ -80,6 +85,10 @@ export default function Home() {
             senderAddress = contracts.mainnet;
         } else if (chainId == 42) {
             senderAddress = contracts.kovan;
+        } else if (chainId == 128) {
+            senderAddress = contracts.heco;
+        } else if (chainId == 256) {
+            senderAddress = contracts.hecotest;
         } else {
             console.error('Unsupported network!!!!');
             return;
