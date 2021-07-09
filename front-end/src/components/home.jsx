@@ -60,6 +60,7 @@ export default function Home() {
 
     var mutliSender = null;
     var senderAddress = null;
+    var txURL = null;
 
     window.ethereum.on('accountsChanged', function (arr) {
         setaccount(arr[0])
@@ -86,14 +87,19 @@ export default function Home() {
 
         if (chainId == 1) {
             senderAddress = contracts.mainnet;
+            txURL = 'https://etherscan.io/tx/';
         } else if (chainId == 42) {
             senderAddress = contracts.kovan;
+            txURL = 'https://kovan.etherscan.io/tx/';
         } else if (chainId == 128) {
             senderAddress = contracts.heco;
+            txURL = 'https://hecoinfo.com/tx/';
         } else if (chainId == 256) {
             senderAddress = contracts.hecotest;
+            txURL = 'https://testnet.hecoinfo.com/tx/';
         } else if (chainId == 56) {
             senderAddress = contracts.bsc;
+            txURL = 'https://bscscan.com/tx/';
         } else {
             console.error('Unsupported network!!!!');
             return;
@@ -465,13 +471,13 @@ export default function Home() {
                         <h5>transactionHash</h5>
                         <ul className='transaction'>
                             {
-                                transactionHash && <li><a href={`https://kovan.etherscan.io/tx/${transactionHash}`} target="_blank" rel="noopener noreferrer">{transactionHash}</a></li>
+                                transactionHash && <li><a href={`${txURL}/${transactionHash}`} target="_blank" rel="noopener noreferrer">{transactionHash}</a></li>
                             }
                         </ul>
                         <h5>batchSendToken</h5>
                         <ul>
                             {
-                                batchSendToken && batchSendToken.map(i => (<li key={i}><a href={`https://kovan.etherscan.io/tx/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
+                                batchSendToken && batchSendToken.map(i => (<li key={i}><a href={`${txURL}/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
                             }
                         </ul>
                     </div>
