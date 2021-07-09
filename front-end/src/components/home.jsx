@@ -13,11 +13,14 @@ import mainnetConfig from '../config/mainnet';
 import hecoConfig from '../config/heco';
 import hecotestConfig from '../config/hecotest';
 
+import bscConfig from '../config/bsc';
+
 const contracts = {
     mainnet: mainnetConfig.sender,
     kovan: kovanConfig.sender,
     heco: hecoConfig.sender,
-    hecotest: hecotestConfig.sender
+    hecotest: hecotestConfig.sender,
+    bsc: bscConfig.sender
 }
 
 const Web3 = require('web3');
@@ -89,6 +92,8 @@ export default function Home() {
             senderAddress = contracts.heco;
         } else if (chainId == 256) {
             senderAddress = contracts.hecotest;
+        } else if (chainId == 56) {
+            senderAddress = contracts.bsc;
         } else {
             console.error('Unsupported network!!!!');
             return;

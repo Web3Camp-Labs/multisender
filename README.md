@@ -21,3 +21,10 @@ After deploy the contracts including the ERC20 token and MultiSender, please run
 If you want dryrun this script, please change the `DRYRUN` to 1 in `WORKDIR="./data/" DRYRUN=1 truffle exec ./scripts/send.js --network development`.
 
 
+# Contracts
+Ethereum Mainet 0x71402BD4ccE356C41Bb3c5070a0E124E9989cbc0  
+Kovan 0x3A4cDe6D856cE7421b563FE50f54e6731196E18a  
+Heco Mainnet 0x063084091a393F9Bc92186CDEDFaf0B4e8909d87  
+Heco Testnet 0x6A365dCadF3A3b81593985FD749611B8311cE9dF  
+BSC Mainnet 0x2Ba47E18597a6478eC0c481a765B8D1986577A39   
+BSC Testnet   
