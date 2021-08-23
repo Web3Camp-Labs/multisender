@@ -29,26 +29,27 @@ export default function Home() {
 
     const [account, setaccount] = useState('');
     // eslint-disable-next-line
-    const [tokenAddress, settokenAddress] = useState('');
+    const [tokenAddress, settokenAddress] = useState('0x000000000000000000000000000000000000bEEF'); // 0xbEEF as Ether
     const [decimals, setdecimals] = useState('18');
     const [amounts, setamounts] = useState('');
     const [selected, setselected] = useState('');
     // const [list, setlist] = useState([]);
     const [defaultTab, setdefaultTab] = useState('first');
     const [tablelist, settablelist] = useState([]);
-    const [transactionHash, settransactionHash] = useState([]);
-    const [batchSendToken, setbatchSendToken] = useState([]);
+    const [txHash, setTxHash] = useState([]);
+    const [txHashList, setTxHashList] = useState([]);
     const [token, settoken] = useState('');
 
     const [totalAmount, settotalAmount] = useState(0);
     const [addressArray, setaddressArray] = useState([]);
+    const [amountWeiArray, setamountWeiArray] = useState([]);
     const [amountArray, setamountArray] = useState([]);
     const [allowance, setallowance] = useState(0);
     const [symbol, setsymbol] = useState('');
     const [mybalance, setmybalance] = useState(0);
-    const [btndisabled, setbtndisabled] = useState(true)
-    const [pageSize] = useState(200)
-    const [ethBalance, setethBalance] = useState(0)
+    const [btndisabled, setbtndisabled] = useState(true);
+    const [pageSize] = useState(200); // Default 200 transfer per tx
+    const [ethBalance, setethBalance] = useState(0);
     const [showLoading, setshowLoading] = useState(false);
     const [tips, settips] = useState('');
     const [show, setShow] = useState(false);
@@ -77,27 +78,24 @@ export default function Home() {
         }, 3000)
     });
 
-    const getChainId = async() => {
-        const chainId = await web3.eth.getChainId();
-        initContract(chainId);
-    };
+    const initContract = async () => {
 
-    const initContract = async(chainId) => {
+        const chainId = await web3.eth.getChainId();
         console.log('chainId', chainId);
 
-        if (chainId == 1) {
+        if (chainId === 1) {
             senderAddress = contracts.mainnet;
             txURL = 'https://etherscan.io/tx/';
-        } else if (chainId == 42) {
+        } else if (chainId === 42) {
             senderAddress = contracts.kovan;
             txURL = 'https://kovan.etherscan.io/tx/';
-        } else if (chainId == 128) {
+        } else if (chainId === 128) {
             senderAddress = contracts.heco;
             txURL = 'https://hecoinfo.com/tx/';
-        } else if (chainId == 256) {
+        } else if (chainId === 256) {
             senderAddress = contracts.hecotest;
             txURL = 'https://testnet.hecoinfo.com/tx/';
-        } else if (chainId == 56) {
+        } else if (chainId === 56) {
             senderAddress = contracts.bsc;
             txURL = 'https://bscscan.com/tx/';
         } else {
@@ -135,9 +133,11 @@ export default function Home() {
             default: break;
         }
     }
+
     const handleRadio = (e) => {
         setselected(e.target.value)
     }
+
     const getChildrenMsg = (data) => {
         console.log(data)
         let str = '';
@@ -146,6 +146,7 @@ export default function Home() {
         })
         setamounts(str)
     }
+
     useEffect(() => {
         if (!account || account === "" || !amounts || !tokenAddress || !decimals) {
             setbtndisabled(true)
@@ -154,6 +155,7 @@ export default function Home() {
             setbtndisabled(false)
         }
     }, [account, amounts, tokenAddress, decimals])
+
     const nextPage = async () => {
 
         let amountlist = amounts.split('\n');
@@ -166,34 +168,75 @@ export default function Home() {
             })
         })
 
-        let obj = {
-            tokenAddress,
-            decimals,
-            transaction: arr
+        if (tokenAddress === '0x000000000000000000000000000000000000bEEF') { // Ether
+            let obj = {
+                tokenAddress,
+                decimals,
+                transaction: arr
+            };
+            settablelist(arr);
+            console.log("=====", obj);
+            setdefaultTab('second')
+
+            console.log("Send Ether ...");
+
+            settoken(null);
+
+            setTotal();
+
+            setallowance(0);
+            setsymbol("ETH");
+
+            const ethBalance = await web3.eth.getBalance(account);
+
+            console.log("My balance: ", web3.utils.fromWei(ethBalance));
+            setmybalance(web3.utils.fromWei(ethBalance))
+
+            console.log("==============ethBalance", ethBalance,);
+            setethBalance(web3.utils.fromWei(ethBalance));
+
+        } else { // ERC20
+            let obj = {
+                tokenAddress,
+                decimals,
+                transaction: arr
+            }
+            settablelist(arr)
+            console.log("=====", obj)
+            setdefaultTab('second')
+
+            const token = await new web3.eth.Contract(tokenAbi, tokenAddress);
+            console.log('Send ERC20 token, token address: ', tokenAddress, token);
+            settoken(token);
+
+            setTotal();
+
+            const allowance = await token.methods.allowance(account, senderAddress).call();
+            console.log("My allowance: ", web3.utils.fromWei(allowance));
+            setallowance(web3.utils.fromWei(allowance))
+
+            const symbol = await token.methods.symbol().call();
+            console.log('Token symbol: ', symbol);
+            setsymbol(symbol)
+
+            const mybalance = await token.methods.balanceOf(account).call();
+            console.log("My balance: ", web3.utils.fromWei(mybalance));
+            setmybalance(web3.utils.fromWei(mybalance))
+
+            const ethBalance = await web3.eth.getBalance(account);
+            console.log("==============ethBalance", ethBalance,)
+            setethBalance(web3.utils.fromWei(ethBalance))
         }
-        settablelist(arr)
-        console.log("=====", obj)
-        setdefaultTab('second')
-
-        const token = await new web3.eth.Contract(tokenAbi, tokenAddress);
-        console.log('token address: ', tokenAddress, token);
-        settoken(token)
-
-        setTotal()
-        getAllowance(token)
-        getSymbol(token)
-        getBalanceOf(token)
-
-        const ethBalance = await web3.eth.getBalance(account);
-        console.log("==============ethBalance", ethBalance,)
-        setethBalance(web3.utils.fromWei(ethBalance))
-
     }
+
+
     const setTotal = () => {
         let lines = amounts.split('\n');
         let addressArray = [];
-        let amountArray = [];
+        let _amountArray = [];
+        let _amountWeiArray = [];
         let totalAmount = 0;
+
         for (let index = 0; index < lines.length; index++) {
             const line = lines[index].trim();
             if (line.length === 0) {
@@ -203,7 +246,8 @@ export default function Home() {
             let values = line.split(',');
 
             let address = values[0].trim();
-            let amount = web3.utils.toWei(values[1].trim());
+            let amountWei = web3.utils.toWei(values[1].trim());
+            let amount = parseFloat(values[1].trim());
 
             if (!web3.utils.isAddress(address)) {
                 console.log('Invalid address: ', address);
@@ -211,35 +255,126 @@ export default function Home() {
             }
 
             addressArray.push(address);
-            amountArray.push(amount);
+            _amountWeiArray.push(amountWei);
+            _amountArray.push(amount);
 
-            totalAmount += parseFloat(values[1].trim());
+            totalAmount += amount;
         }
-        settotalAmount(totalAmount)
-        setaddressArray(addressArray)
-        setamountArray(amountArray)
+
+        settotalAmount(totalAmount);
+        setaddressArray(addressArray);
+        setamountWeiArray(_amountWeiArray);
+        setamountArray(_amountArray);
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
-
-    }
-    const getAllowance = async (token) => {
-        const allowance = await token.methods.allowance(account, senderAddress).call();
-        console.log("My allowance: ", web3.utils.fromWei(allowance));
-        setallowance(web3.utils.fromWei(allowance))
-    }
-    const getSymbol = async (token) => {
-        const symbol = await token.methods.symbol().call();
-        console.log('Token symbol: ', symbol);
-        setsymbol(symbol)
-    }
-    const getBalanceOf = async (token) => {
-        const mybalance = await token.methods.balanceOf(account).call();
-        console.log("My balance: ", web3.utils.fromWei(mybalance));
-        setmybalance(web3.utils.fromWei(mybalance))
     }
 
-    const sendToken = async () => {
-        setshowLoading(true)
-        settips('waiting....')
+    const doBatchSend = async () => {
+        if (tokenAddress === '0x000000000000000000000000000000000000bEEF') { // Ether
+            // Send Ether
+            sendEther();
+        } else {
+            // Send ERC20 Token
+            sendERC20Token();
+        }
+    }
+
+    const sendEther = async () => {
+        setshowLoading(true);
+        settips('waiting....');
+
+        console.log(selected);
+
+        // Step-1: Check balance...
+        let lines = amounts.split('\n');
+        let _addressArray = [];
+        let _amountArray = [];
+        let _amountWeiArray = [];
+        let _totalAmount = 0;
+
+        for (let index = 0; index < lines.length; index++) {
+            const line = lines[index].trim();
+            if (line.length === 0) {
+                console.log('skip empty line');
+                continue;
+            }
+            let values = line.split(',');
+
+            let address = values[0].trim();
+            let amountWei = web3.utils.toWei(values[1].trim());
+            let amount = parseFloat(values[1].trim());
+
+            if (!web3.utils.isAddress(address)) {
+                console.log('Invalid address: ', address);
+                continue;
+            }
+
+            _addressArray.push(address);
+            _amountWeiArray.push(amountWei);
+            _amountArray.push(amount);
+
+            _totalAmount += amount;
+        }
+
+        let pageNum = Math.ceil(_addressArray.length / pageSize);
+        let addressArr = _addressArray.slice(0, pageSize);
+        // let amountArr = amountArray.slice(0, pageSize);
+        let amountWeiArr = _amountWeiArray.slice(0, pageSize);
+
+        console.log("total amount: ", _totalAmount);
+
+        let encodedData = await mutliSender.methods.batchSendEther(addressArr, amountWeiArr).encodeABI({ from: account });
+        let gasWei = await web3.eth.estimateGas({
+            from: account,
+            data: encodedData,
+            value: web3.utils.toHex(web3.utils.toWei(_totalAmount.toString())),
+            to: senderAddress
+        });
+
+        console.log("gas wei: ", gasWei);
+        let gas = web3.utils.fromWei(gasWei.toString());
+        console.log('gas', gas);
+
+        let totalNeed = _totalAmount + pageNum * gas;
+        console.log("total need: ", totalNeed);
+
+        // fixme: need handle error here!
+        if (ethBalance < totalNeed) {
+            console.error("Insufficent fund!");
+        }
+
+        // Step-2: Sending Ether...
+        let txIndex = 0;
+        let txHashArr = [];
+        for (let index = 0; index < addressArray.length; index += pageSize) {
+            txIndex++;
+            let addressArr = addressArray.slice(index, index + pageSize);
+            let amountWeiArr = amountWeiArray.slice(index, index + pageSize);
+            let amountArr = amountArray.slice(index, index + pageSize);
+            let sendValue = amountArr.reduce((a, b) => a + b, 0);
+
+            await mutliSender.methods.batchSendEther(addressArr, amountWeiArr)
+                .send({
+                    from: account,
+                    value: web3.utils.toHex(web3.utils.toWei(sendValue.toString()))
+                })
+                .then(data => {
+                    console.log('batchSendEther', data);
+                    txHashArr.push(data.transactionHash);
+                    settips(`batchSendEther (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
+                    if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
+                        setshowLoading(false);
+                    }
+                }).catch(err => {
+                    setshowLoading(false);
+                });
+        }
+        setTxHashList(txHashArr);
+        setdefaultTab('third');
+    }
+
+    const sendERC20Token = async () => {
+        setshowLoading(true);
+        settips('waiting....');
 
         console.log(selected)
         const decimals = await token.methods.decimals().call();
@@ -251,17 +386,17 @@ export default function Home() {
                 const totalSupply = await token.methods.totalSupply().call();
 
                 await token.methods.approve(senderAddress, totalSupply).send({ from: account }).then(data => {
-                    console.log('transactionHash', data);
-                    settips('transactionHash')
-                    settransactionHash(data.transactionHash)
+                    console.log('txHash', data);
+                    settips('txHash')
+                    setTxHash(data.transactionHash)
                 }).catch(err => {
                     setshowLoading(false)
                 });
             } else {
                 await token.methods.approve(senderAddress, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data => {
-                    console.log('transactionHash', data);
-                    settips('transactionHash')
-                    settransactionHash(data.transactionHash)
+                    console.log('txHash', data);
+                    settips('txHash')
+                    setTxHash(data.transactionHash)
                 }).catch(err => {
                     setshowLoading(false)
                 });
@@ -271,32 +406,32 @@ export default function Home() {
         }
 
         // Step-2: Sending
-        let transIndex = 0;
-        let batchSendTokenArr = [];
+        let txIndex = 0;
+        let txHashArr = [];
         for (let index = 0; index < addressArray.length; index += pageSize) {
-            transIndex++;
+            txIndex++;
             let addressArr = addressArray.slice(index, index + pageSize);
-            let amountArr = amountArray.slice(index, index + pageSize);
-            await mutliSender.methods.batchSendToken(tokenAddress, addressArr, amountArr).send({ from: account })
+            let amountArr = amountWeiArray.slice(index, index + pageSize);
+            await mutliSender.methods.batchSendERC20(tokenAddress, addressArr, amountArr).send({ from: account })
                 .then(data => {
 
-                    console.log('batchSendToken', data);
-                    batchSendTokenArr.push(data.transactionHash)
-                    settips(`batchSendToken (${transIndex}/${Math.ceil(addressArray.length / pageSize)})`)
-                    if (transIndex >= Math.ceil(addressArray.length / pageSize)) {
-                        setshowLoading(false)
+                    console.log('batchSendERC20', data);
+                    txHashArr.push(data.transactionHash);
+                    settips(`batchSendERC20 (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
+                    if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
+                        setshowLoading(false);
                     }
                 }).catch(err => {
-                    setshowLoading(false)
+                    setshowLoading(false);
                 });
 
         }
-        setbatchSendToken(batchSendTokenArr)
-        setdefaultTab('third')
+        setTxHashList(txHashArr);
+        setdefaultTab('third');
     }
 
 
-    getChainId();
+    initContract();
 
     return (
         <div className='homeBrdr'>
@@ -462,22 +597,22 @@ export default function Home() {
                             />
                         </Form.Group>
                         <div>
-                            <Button variant="primary" onClick={sendToken}>Submit</Button>
+                            <Button variant="primary" onClick={doBatchSend}>Submit</Button>
                         </div>
                     </div>
                 </Tab>
                 <Tab eventKey="third" title="Step3. Result">
                     <div className="container result">
-                        <h5>transactionHash</h5>
+                        <h5>Approval txHash</h5>
                         <ul className='transaction'>
                             {
-                                transactionHash && <li><a href={`${txURL}/${transactionHash}`} target="_blank" rel="noopener noreferrer">{transactionHash}</a></li>
+                                txHash && <li><a href={`${txURL}/${txHash}`} target="_blank" rel="noopener noreferrer">{txHash}</a></li>
                             }
                         </ul>
-                        <h5>batchSendToken</h5>
+                        <h5>Transactions</h5>
                         <ul>
                             {
-                                batchSendToken && batchSendToken.map(i => (<li key={i}><a href={`${txURL}/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
+                                txHashList && txHashList.map(i => (<li key={i}><a href={`${txURL}/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
                             }
                         </ul>
                     </div>
