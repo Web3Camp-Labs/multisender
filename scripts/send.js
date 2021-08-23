@@ -142,7 +142,7 @@ async function main() {
             const addressArray = addresses.slice(index, index + pageSize);
             const amountArray = amounts.slice(index, index + pageSize);
 
-            let res = await senderContract.batchSendToken(tokenContract.address, addressArray, amountArray);
+            let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray);
             console.log(`tx: ${res.tx}`);
         }
 

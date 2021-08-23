@@ -60,7 +60,7 @@ contract('MultiSender Contract', accounts => {
 
         await token.approve(sender.address, totalAmount);
 
-        const res = await sender.batchSendToken(token.address, receivers, amounts);
+        const res = await sender.batchSendERC20(token.address, receivers, amounts);
         // console.log("result : ", res);
 
         let index = 0;
@@ -88,17 +88,6 @@ contract('MultiSender Contract', accounts => {
             , web3.utils.toWei('7')
             , web3.utils.toWei('8')
             , web3.utils.toWei('9')];
-
-        // let amounts = [
-        //     UNIT.mul(new BN('0.1'))
-        //     , UNIT.mul(new BN('0.2'))
-        //     , UNIT.mul(new BN('0.3'))
-        //     , UNIT.mul(new BN('0.4'))
-        //     , UNIT.mul(new BN('0.5'))
-        //     , UNIT.mul(new BN('0.6'))
-        //     , UNIT.mul(new BN('0.7'))
-        //     , UNIT.mul(new BN('0.8'))
-        //     , UNIT.mul(new BN('0.9'))];
 
         let receivers = [
             accounts[1]

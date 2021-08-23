@@ -182,7 +182,7 @@ pragma solidity >=0.8.0 <0.9.0;
 contract MultiSender is Ownable {
     constructor() {}
 
-    function batchSendToken(
+    function batchSendERC20(
         address _token,
         address[] memory _targets,
         uint256[] memory _amount

@@ -12,7 +12,7 @@ contract MultiSender is Ownable {
     event MultisendToken(uint256 total, address tokenAddress);
     event ClaimedToken(address token, address owner, uint256 balance);
 
-    function batchSendToken(
+    function batchSendERC20(
         address _token,
         address[] memory _targets,
         uint256[] memory _amounts
