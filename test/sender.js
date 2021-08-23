@@ -84,10 +84,10 @@ contract('MultiSender Contract', accounts => {
             , web3.utils.toWei('3')
             , web3.utils.toWei('4')
             , web3.utils.toWei('5')
-            , web3.utils.toWei('6')
-            , web3.utils.toWei('7')
-            , web3.utils.toWei('8')
-            , web3.utils.toWei('9')];
+            , web3.utils.toWei('4')
+            , web3.utils.toWei('4')
+            , web3.utils.toWei('2')
+            , web3.utils.toWei('1')];
 
         let receivers = [
             accounts[1]
@@ -133,5 +133,78 @@ contract('MultiSender Contract', accounts => {
             index += 1;
         }
 
+    });
+
+    it('claim tokens', async () => {
+
+        let amounts = [
+            web3.utils.toWei('0.1')
+            , web3.utils.toWei('0.2')
+            , web3.utils.toWei('0.3')
+            , web3.utils.toWei('0.4')
+            , web3.utils.toWei('0.5')
+            , web3.utils.toWei('0.6')
+            , web3.utils.toWei('0.7')
+            , web3.utils.toWei('0.8')
+            , web3.utils.toWei('0.9')];
+
+        let receivers = [
+            accounts[1]
+            , accounts[2]
+            , accounts[3]
+            , accounts[4]
+            , accounts[5]
+            , accounts[6]
+            , accounts[7]
+            , accounts[8]
+            , accounts[9]
+        ]
+
+        let totalAmount = new BN('0');
+
+        for (const elem of amounts) {
+            totalAmount = totalAmount.add(new BN(elem));
+        }
+
+        console.log("Total amount to send: ", totalAmount);
+
+        let s = await web3.eth.getBalance(accounts[0]);
+        let balance = web3.utils.fromWei(s);
+        console.log("Current balance: ", balance);
+
+
+        totalAmount = totalAmount.add(new BN(web3.utils.toWei("3"))); // extra
+
+        const res = await sender.batchSendEther(receivers, amounts, {
+            from: accounts[0],
+            value: web3.utils.toHex(totalAmount),
+        });
+
+
+        console.log("result : ", res);
+
+        let index = 0;
+        for (const elem of receivers) {
+            let amount = amounts[index];
+            let receiver = receivers[index];
+            let s = await web3.eth.getBalance(receiver);
+            let balance = web3.utils.fromWei(s);
+            // assert(balance.eq(amount), 'wrong balance');
+            console.log(`Address: ${receiver}, amount: ${amount}, balance: ${balance}`);
+
+            index += 1;
+        }
+
+        let b = await web3.eth.getBalance(sender.address);
+        let bnb = new BN(b);
+        console.log("Sender Contract balance before claim: ", web3.utils.fromWei(b));
+        assert(bnb.eq(new BN(web3.utils.toWei("3"))), "incorrect balance of contract");
+
+        await sender.claimTokens("0x0000000000000000000000000000000000000000");
+
+        b = await web3.eth.getBalance(sender.address);
+        bnb = new BN(b);
+        console.log("Sender Contract balance after claim: ", web3.utils.fromWei(b));
+        assert(bnb.eq(new BN(web3.utils.toWei("0"))), "incorrect balance of contract");
     });
 });
