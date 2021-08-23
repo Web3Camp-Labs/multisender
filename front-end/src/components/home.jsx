@@ -288,7 +288,7 @@ export default function Home() {
 
     const sendEther = async () => {
         setshowLoading(true);
-        settips('waiting....');
+        settips('Waiting...');
 
         console.log(selected);
 
@@ -360,6 +360,8 @@ export default function Home() {
             let amountArr = amountArray.slice(index, index + pageSize);
             let sendValue = amountArr.reduce((a, b) => a + b, 0);
 
+            settips(`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
+
             await mutliSender.methods.batchSendEther(addressArr, amountWeiArr)
                 .send({
                     from: account,
@@ -368,7 +370,6 @@ export default function Home() {
                 .then(data => {
                     console.log('batchSendEther', data);
                     txHashArr.push(data.transactionHash);
-                    settips(`batchSendEther (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
                     if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                         setshowLoading(false);
                     }
@@ -382,7 +383,7 @@ export default function Home() {
 
     const sendERC20Token = async () => {
         setshowLoading(true);
-        settips('waiting....');
+        settips('Waiting...');
 
         console.log(selected)
         const decimals = await token.methods.decimals().call();
@@ -395,7 +396,7 @@ export default function Home() {
 
                 await token.methods.approve(senderAddress, totalSupply).send({ from: account }).then(data => {
                     console.log('txHash', data);
-                    settips('txHash')
+                    settips('Unlimited Approve in progress...')
                     setTxHash(data.transactionHash)
                 }).catch(err => {
                     setshowLoading(false)
@@ -403,7 +404,7 @@ export default function Home() {
             } else {
                 await token.methods.approve(senderAddress, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data => {
                     console.log('txHash', data);
-                    settips('txHash')
+                    settips('Approve in progress...')
                     setTxHash(data.transactionHash)
                 }).catch(err => {
                     setshowLoading(false)
@@ -420,12 +421,13 @@ export default function Home() {
             txIndex++;
             let addressArr = addressArray.slice(index, index + pageSize);
             let amountArr = amountWeiArray.slice(index, index + pageSize);
+
+            settips(`Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
+
             await mutliSender.methods.batchSendERC20(tokenAddress, addressArr, amountArr).send({ from: account })
                 .then(data => {
-
                     console.log('batchSendERC20', data);
                     txHashArr.push(data.transactionHash);
-                    settips(`batchSendERC20 (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
                     if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                         setshowLoading(false);
                     }
@@ -611,13 +613,13 @@ export default function Home() {
                 </Tab>
                 <Tab eventKey="third" title="Step3. Result">
                     <div className="container result">
-                        <h5>Approval txHash</h5>
+                        <h5>Approval history</h5>
                         <ul className='transaction'>
                             {
                                 txHash && <li><a href={`${txURL}/${txHash}`} target="_blank" rel="noopener noreferrer">{txHash}</a></li>
                             }
                         </ul>
-                        <h5>Transactions</h5>
+                        <h5>Transactions history</h5>
                         <ul>
                             {
                                 txHashList && txHashList.map(i => (<li key={i}><a href={`${txURL}/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
