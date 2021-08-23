@@ -135,7 +135,7 @@ contract('MultiSender Contract', accounts => {
 
     });
 
-    it('claim tokens', async () => {
+    it('claim ether', async () => {
 
         let amounts = [
             web3.utils.toWei('0.1')
