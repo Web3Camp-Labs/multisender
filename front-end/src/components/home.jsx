@@ -62,7 +62,6 @@ export default function Home() {
 
     var mutliSender = null;
     var senderAddress = null;
-    var txURL = null;
 
     window.ethereum.on('accountsChanged', function (arr) {
         setaccount(arr[0])
@@ -85,24 +84,26 @@ export default function Home() {
 
     const initContract = async () => {
 
+        let url = null;
+
         const chainId = await web3.eth.getChainId();
         console.log('chainId', chainId);
 
         if (chainId === 1) {
             senderAddress = contracts.mainnet;
-            txURL = 'https://etherscan.io/tx/';
+            url = 'https://etherscan.io/tx/';
         } else if (chainId === 42) {
             senderAddress = contracts.kovan;
-            txURL = 'https://kovan.etherscan.io/tx/';
+            url = 'https://kovan.etherscan.io/tx/';
         } else if (chainId === 128) {
             senderAddress = contracts.heco;
-            txURL = 'https://hecoinfo.com/tx/';
+            url = 'https://hecoinfo.com/tx/';
         } else if (chainId === 256) {
             senderAddress = contracts.hecotest;
-            txURL = 'https://testnet.hecoinfo.com/tx/';
+            url = 'https://testnet.hecoinfo.com/tx/';
         } else if (chainId === 56) {
             senderAddress = contracts.bsc;
-            txURL = 'https://bscscan.com/tx/';
+            url = 'https://bscscan.com/tx/';
         } else {
             console.error('Unsupported network!!!!');
             return;
