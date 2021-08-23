@@ -61,9 +61,7 @@ contract MultiSender is Ownable {
         require(address(this).balance >= total, "Insufficent fund");
 
         for (uint256 i = 0; i < _targets.length; i++) {
-            (bool sent, bytes memory data) = _targets[i].call{
-                value: _amounts[i]
-            }("");
+            (bool sent, ) = _targets[i].call{value: _amounts[i]}("");
             require(sent, "transfer eth failed");
             total += _amounts[i];
         }
@@ -77,7 +75,7 @@ contract MultiSender is Ownable {
 
         if (_token == address(0x0)) {
             balance = address(this).balance;
-            (bool sent, bytes memory data) = owner.call{value: balance}("");
+            (bool sent, ) = owner.call{value: balance}("");
             require(sent, "transfer eth failed");
             emit ClaimedToken(address(0x0), owner, balance);
             return;
