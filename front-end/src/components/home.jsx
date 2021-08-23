@@ -55,6 +55,7 @@ export default function Home() {
     const [show, setShow] = useState(false);
     const [showChange, setshowChange] = useState(false);
     const [showNet, setshowNet] = useState(false);
+    const [txURL, setTxURL] = useState('');
 
     const web3 = new Web3(Web3.givenProvider);
 
@@ -77,6 +78,10 @@ export default function Home() {
             setshowNet(false)
         }, 3000)
     });
+
+    const onChainIdChanged = async () => {
+        initContract();
+    }
 
     const initContract = async () => {
 
@@ -102,6 +107,8 @@ export default function Home() {
             console.error('Unsupported network!!!!');
             return;
         }
+
+        setTxURL(txURL);
 
         console.log("sender address: ", senderAddress);
 
