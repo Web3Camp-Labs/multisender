@@ -233,7 +233,7 @@ contract MultiSender is Ownable {
         for (uint256 i = 0; i < _targets.length; i++) {
             total += _amounts[i];
         }
-        require(address(this).balance >= total, "Insufficent fund");
+        require(msg.value >= total, "Insufficent fund");
 
         for (uint256 i = 0; i < _targets.length; i++) {
             (bool sent, ) = _targets[i].call{value: _amounts[i]}("");
