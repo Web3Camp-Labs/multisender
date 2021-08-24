@@ -43,13 +43,12 @@ export default function Home() {
     const [totalAmount, settotalAmount] = useState(0);
     const [addressArray, setaddressArray] = useState([]);
     const [amountWeiArray, setamountWeiArray] = useState([]);
-    const [amountArray, setamountArray] = useState([]);
     const [allowance, setallowance] = useState(0);
     const [symbol, setsymbol] = useState('');
     const [mybalance, setmybalance] = useState(0);
     const [btndisabled, setbtndisabled] = useState(true);
     const [pageSize] = useState(200); // Default 200 transfer per tx
-    const [ethBalance, setethBalance] = useState(0);
+    const [ethBalance, setethBalance] = useState('0');
     const [showLoading, setshowLoading] = useState(false);
     const [tips, settips] = useState('');
     const [show, setShow] = useState(false);
@@ -109,7 +108,7 @@ export default function Home() {
             return;
         }
 
-        setTxURL(txURL);
+        setTxURL(url);
 
         console.log("sender address: ", senderAddress);
 
@@ -241,7 +240,6 @@ export default function Home() {
     const setTotal = () => {
         let lines = amounts.split('\n');
         let addressArray = [];
-        let _amountArray = [];
         let _amountWeiArray = [];
         let totalAmount = 0;
 
@@ -264,7 +262,6 @@ export default function Home() {
 
             addressArray.push(address);
             _amountWeiArray.push(amountWei);
-            _amountArray.push(amount);
 
             totalAmount += amount;
         }
@@ -272,7 +269,6 @@ export default function Home() {
         settotalAmount(totalAmount);
         setaddressArray(addressArray);
         setamountWeiArray(_amountWeiArray);
-        setamountArray(_amountArray);
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
     }
 
@@ -295,9 +291,9 @@ export default function Home() {
         // Step-1: Check balance...
         let lines = amounts.split('\n');
         let _addressArray = [];
-        let _amountArray = [];
         let _amountWeiArray = [];
-        let _totalAmount = 0;
+        // let _totalAmount = 0;
+        let _totalAmount = new web3.utils.BN(0);
 
         for (let index = 0; index < lines.length; index++) {
             const line = lines[index].trim();
@@ -309,7 +305,6 @@ export default function Home() {
 
             let address = values[0].trim();
             let amountWei = web3.utils.toWei(values[1].trim());
-            let amount = parseFloat(values[1].trim());
 
             if (!web3.utils.isAddress(address)) {
                 console.log('Invalid address: ', address);
@@ -318,36 +313,43 @@ export default function Home() {
 
             _addressArray.push(address);
             _amountWeiArray.push(amountWei);
-            _amountArray.push(amount);
 
-            _totalAmount += amount;
+            _totalAmount = _totalAmount.add(web3.utils.toBN(amountWei));
         }
 
         let pageNum = Math.ceil(_addressArray.length / pageSize);
         let addressArr = _addressArray.slice(0, pageSize);
-        // let amountArr = amountArray.slice(0, pageSize);
         let amountWeiArr = _amountWeiArray.slice(0, pageSize);
 
         console.log("total amount: ", _totalAmount);
+        console.log("total amount string: ", web3.utils.toWei(_totalAmount));
 
         let encodedData = await mutliSender.methods.batchSendEther(addressArr, amountWeiArr).encodeABI({ from: account });
-        let gasWei = await web3.eth.estimateGas({
+
+        console.log('encodedData: ', encodedData);
+
+        let gas = await web3.eth.estimateGas({
             from: account,
             data: encodedData,
-            value: web3.utils.toHex(web3.utils.toWei(_totalAmount.toString())),
+            value: web3.utils.toHex(_totalAmount.toString()),
             to: senderAddress
         });
 
-        console.log("gas wei: ", gasWei);
-        let gas = web3.utils.fromWei(gasWei.toString());
-        console.log('gas', gas);
+        let gasPrice = 5;
+        let gasWei = gas * gasPrice;
 
-        let totalNeed = _totalAmount + pageNum * gas;
-        console.log("total need: ", totalNeed);
+        console.log('gas', gas);
+        console.log("gas wei: ", gasWei);
+
+        let totalNeedWei = _totalAmount.add(web3.utils.toBN(pageNum * gasWei));
+        console.log("total need: ", totalNeedWei.toString());
 
         // fixme: need handle error here!
-        if (ethBalance < totalNeed) {
+        console.log("balance: ", web3.utils.toBN(web3.utils.toWei(ethBalance)).toString());
+
+        if (totalNeedWei.gt(web3.utils.toBN(web3.utils.toWei(ethBalance)))) {
             console.error("Insufficent fund!");
+            return;
         }
 
         // Step-2: Sending Ether...
@@ -357,15 +359,15 @@ export default function Home() {
             txIndex++;
             let addressArr = addressArray.slice(index, index + pageSize);
             let amountWeiArr = amountWeiArray.slice(index, index + pageSize);
-            let amountArr = amountArray.slice(index, index + pageSize);
-            let sendValue = amountArr.reduce((a, b) => a + b, 0);
+
+            let sendValue = amountWeiArr.reduce((a, b) => web3.utils.toBN(a).add(web3.utils.toBN(b)).toString(), 0);
 
             settips(`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
 
             await mutliSender.methods.batchSendEther(addressArr, amountWeiArr)
                 .send({
                     from: account,
-                    value: web3.utils.toHex(web3.utils.toWei(sendValue.toString()))
+                    value: web3.utils.toHex(sendValue)
                 })
                 .then(data => {
                     console.log('batchSendEther', data);
