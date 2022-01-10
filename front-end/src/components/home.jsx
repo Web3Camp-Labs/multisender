@@ -14,13 +14,15 @@ import hecoConfig from '../config/heco';
 import hecotestConfig from '../config/hecotest';
 
 import bscConfig from '../config/bsc';
+import bsctestConfig from '../config/bsctest';
 
 const contracts = {
     mainnet: mainnetConfig.sender,
     kovan: kovanConfig.sender,
     heco: hecoConfig.sender,
     hecotest: hecotestConfig.sender,
-    bsc: bscConfig.sender
+    bsc: bscConfig.sender,
+    bsctest: bsctestConfig.sender,
 }
 
 const Web3 = require('web3');
@@ -103,6 +105,9 @@ export default function Home() {
         } else if (chainId === 56) {
             senderAddress = contracts.bsc;
             url = 'https://bscscan.com/tx/';
+        } else if (chainId === 97) {
+            senderAddress = contracts.bsctest;
+            url = 'https://testnet.bscscan.com/tx/';
         } else {
             console.error('Unsupported network!!!!');
             return;
