@@ -1,0 +1,49 @@
+.homeBrdr{
+  margin: 0;
+  .tab-content{
+    background: #fff;
+    padding: 25px;
+  }
+  .numbers{
+    font-size: 20px;
+  }
+  .tips{
+    font-size: 12px;
+    color: #999;
+  }
+  h5{
+    padding:10px 0 5px 10px;
+  }
+  .radioGroup{
+    display: flex;
+    justify-content: flex-start;
+  }
+  .form-check{
+    width: 33.3%;
+  }
+}
+.wallet{
+  text-align: right;
+}
+
+.tableBrdr{
+  height: 540px;
+  overflow-y: auto;
+}
+
+.loading{
+  display: flex;
+  padding: 50px 25px;
+  .waiting{
+    padding-left: 20px;
+    color: #666;
+  }
+}
+.result{
+  li{
+    padding-left: 10px;
+  }
+  .transaction{
+    margin-bottom: 20px;
+  }
+}
