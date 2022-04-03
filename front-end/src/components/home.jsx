@@ -7,14 +7,14 @@ import Accounts from '../api/Account';
 import tokenAbi from '../abi/ERC20.abi';
 import senderAbi from '../abi/sender.abi';
 
-import kovanConfig from '../config/kovan';
-import mainnetConfig from '../config/mainnet';
+import kovanConfig from '../config/kovan.json';
+import mainnetConfig from '../config/mainnet.json';
 
-import hecoConfig from '../config/heco';
-import hecotestConfig from '../config/hecotest';
+import hecoConfig from '../config/heco.json';
+import hecotestConfig from '../config/hecotest.json';
 
-import bscConfig from '../config/bsc';
-import bsctestConfig from '../config/bsctest';
+import bscConfig from '../config/bsc.json';
+import bsctestConfig from '../config/bsctest.json';
 
 const contracts = {
     mainnet: mainnetConfig.sender,
