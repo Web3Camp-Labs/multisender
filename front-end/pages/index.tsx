@@ -57,6 +57,7 @@ const NavBox = styled.div`
       align-items: center;
       color: #cccccc;
       font-size: 16px;
+      cursor: pointer;
     }
     &.active{
       &>div{
@@ -70,7 +71,11 @@ const NavBox = styled.div`
 
 
 const Home: NextPage = () => {
-    const [ current, setCurrent ] = useState(3)
+    const [ current, setCurrent ] = useState(3);
+
+    const handleCurrent = (index) =>{
+        setCurrent(index)
+    }
   return (
     <>
       <Head>
@@ -88,17 +93,17 @@ const Home: NextPage = () => {
                           <NavBox>
                               <div className="bg">
                                   <ul className="box">
-                                      <li className={current === 1 ?"active":''}>
+                                      <li className={current === 1 ?"active":''} onClick={()=>handleCurrent(1)}>
                                           <div>
                                               <FileEarmarkCode />
                                           </div>
                                       </li>
-                                      <li  className={current === 2 ?"active":''}>
+                                      <li  className={current === 2 ?"active":''} onClick={()=>handleCurrent(2)}>
                                           <div>
                                               <Check2Square />
                                           </div>
                                       </li>
-                                      <li className={current === 3 ?"active":''}><div> <Display /></div></li>
+                                      <li className={current === 3 ?"active":''} onClick={()=>handleCurrent(3)}><div> <Display /></div></li>
                                   </ul>
                               </div>
                           </NavBox>
