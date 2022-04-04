@@ -3,9 +3,13 @@ import Head from 'next/head'
 import {Container, Row, Col, Card} from 'react-bootstrap';
 import styled from "styled-components";
 import HeaderTop from "./components/headTop";
-// import BatchQuery from "./components/batchQuery";
 import FooterBox from "./components/footerBox";
 import {Display,FileEarmarkCode,Check2Square} from "react-bootstrap-icons"
+import Step1 from "./components/step1";
+import Step2 from "./components/step2";
+import Step3 from "./components/step3";
+import {useState} from "react";
+
 const MainBox = styled.div`
     display: flex;
   flex-grow: 1;
@@ -66,6 +70,7 @@ const NavBox = styled.div`
 
 
 const Home: NextPage = () => {
+    const [ current, setCurrent ] = useState(3)
   return (
     <>
       <Head>
@@ -83,22 +88,30 @@ const Home: NextPage = () => {
                           <NavBox>
                               <div className="bg">
                                   <ul className="box">
-                                      <li className="active">
+                                      <li className={current === 1 ?"active":''}>
                                           <div>
                                               <FileEarmarkCode />
                                           </div>
                                       </li>
-                                      <li >
+                                      <li  className={current === 2 ?"active":''}>
                                           <div>
                                               <Check2Square />
                                           </div>
                                       </li>
-                                      <li ><div> <Display /></div></li>
+                                      <li className={current === 3 ?"active":''}><div> <Display /></div></li>
                                   </ul>
                               </div>
                           </NavBox>
                           <CardBox body>
-                                {/* <BatchQuery /> */}
+                              {
+                                  current === 1 && <Step1 />
+                              }
+                              {
+                                  current === 2 && <Step2 />
+                              }
+                              {
+                                  current === 3 && <Step3 />
+                              }
                           </CardBox>
                       </Col>
                   </Row>
