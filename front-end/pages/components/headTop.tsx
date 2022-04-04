@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Button } from 'react-bootstrap';
-import Link from "next/link";
+import {ActionType} from "../api/types";
 
 import Accounts from '../api/Account';
+import {useWeb3} from "../api/connect";
 
 export default function HeaderTop() {
-    const [account, setaccount] = useState('');
-    const [show, setShow] = useState(false);
+    const {dispatch} = useWeb3();
+    const [account, setaccount] = useState<string>('');
+    const [show, setShow] = useState<boolean>(false);
 
     const connectWallet = async () => {
-        await Accounts.accountlist().then(data => {
+        await Accounts.accountList().then(data => {
             if (data.type === 'success') {
                 setaccount(data.data)
+                dispatch({type: ActionType.SET_ACCOUNT,payload:data?.data});
             } else {
                 setShow(true)
             }

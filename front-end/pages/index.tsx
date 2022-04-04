@@ -1,5 +1,4 @@
 import type { NextPage } from 'next'
-import Head from 'next/head'
 import {Container, Row, Col, Card} from 'react-bootstrap';
 import styled from "styled-components";
 import HeaderTop from "./components/headTop";
@@ -68,22 +67,14 @@ const NavBox = styled.div`
     }
   }
 `
-
-
 const Home: NextPage = () => {
-    const [ current, setCurrent ] = useState(3);
+    const [ current, setCurrent ] = useState<number>(1);
 
-    const handleCurrent = (index) =>{
+    const handleCurrent = (index:number) =>{
         setCurrent(index)
     }
   return (
     <>
-      <Head>
-        <title>Batch Query</title>
-        <meta name="description" content="Batch Query" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
       <MainContent >
           <HeaderTop />
           <MainBox>
@@ -109,7 +100,7 @@ const Home: NextPage = () => {
                           </NavBox>
                           <CardBox body>
                               {
-                                  current === 1 && <Step1 />
+                                  current === 1 && <Step1 handleNext={handleCurrent}/>
                               }
                               {
                                   current === 2 && <Step2 />

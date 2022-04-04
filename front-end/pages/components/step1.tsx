@@ -1,6 +1,9 @@
 import {Row, Col, Form,FloatingLabel,Button} from 'react-bootstrap';
 import styled from "styled-components";
-import {BoxArrowUp} from "react-bootstrap-icons";
+import {ChangeEvent, useState, useEffect} from "react";
+import {useWeb3} from "../api/connect";
+import Excel from "./excel";
+import {ActionType} from "../api/types";
 
 const Box = styled.div`
     .height50{
@@ -12,8 +15,66 @@ const Box = styled.div`
     }
   }
 `
+interface Props{
+    handleNext: Function
+}
 
-export default function Step1(){
+interface fileObj{
+    address:string
+    amount:string
+}
+
+export default function Step1(props:Props){
+
+    const { dispatch,state } = useWeb3();
+    const { account } = state;
+
+    const [tokenAddress, settokenAddress] = useState<string>('0x000000000000000000000000000000000000bEEF'); // 0xbEEF as Ether
+    const [decimals, setdecimals] = useState<string>('18');
+    const [amounts, setamounts] = useState<string>('');
+    const [btndisabled, setbtndisabled] = useState(true);
+
+    useEffect(() => {
+        if (!account || account === "" || !amounts || !tokenAddress || !decimals) {
+            setbtndisabled(true)
+
+        } else {
+            setbtndisabled(false)
+        }
+    }, [account, amounts, tokenAddress, decimals])
+
+    const handleInput = (e:ChangeEvent) => {
+        const { name, value } = e.target as HTMLInputElement;
+        switch (name) {
+            case 'token':
+                settokenAddress(value)
+                break;
+            case 'decimals':
+                setdecimals(value)
+                break;
+            case 'amounts':
+                setamounts(value)
+                break;
+            default: break;
+        }
+    }
+    const nextPage = async () => {
+        props.handleNext(2)
+        const obj = {
+             amounts, tokenAddress, decimals
+        }
+        dispatch({type: ActionType.STORE_FIRST,payload:obj});
+    }
+
+    const getChildrenMsg = (data:fileObj[]) => {
+        console.log(data)
+        let str = '';
+        data.map(item => {
+            str += `${item.address},${item.amount} \n`;
+        })
+        setamounts(str)
+    }
+
     return <Box>
             <Row>
                 <Col md={9}>
@@ -26,8 +87,8 @@ export default function Step1(){
                             type="text"
                             name='token'
                             placeholder="Token"
-                            // value={tokenAddress}
-                            // onChange={(e)=>handleInput(e)}
+                            value={tokenAddress}
+                            onChange={(e)=>handleInput(e)}
                         />
                     </FloatingLabel>
                 </Col>
@@ -42,17 +103,14 @@ export default function Step1(){
                             type="text"
                             name='token'
                             placeholder="Decimals"
-                            // value={decimals}
-                            // onChange={(e)=>handleInput(e)}
+                            value={decimals}
+                            onChange={(e)=>handleInput(e)}
                         />
                     </FloatingLabel>
                 </Col>
             </Row>
             <div className="mb-3">
-                <Button variant="flat" className="upload" >
-                    <BoxArrowUp />
-                    <span>Import Addresses</span>
-                </Button>
+                <Excel getChildrenMsg={getChildrenMsg} />
             </div>
             <Row>
                 <Col md={12}>
@@ -66,8 +124,8 @@ export default function Step1(){
                             as="textarea"
                             name='amounts'
                             className="height50"
-                            // value={amounts}
-                            //  onChange={(e)=>handleInput(e)}
+                            value={amounts}
+                             onChange={(e)=>handleInput(e)}
                         />
                     </FloatingLabel>
 
@@ -76,8 +134,8 @@ export default function Step1(){
             <div>
                 <Button
                     variant="flat"
-                    // onClick={nextPage}
-                    // disabled={btndisabled}
+                    onClick={()=>nextPage()}
+                    disabled={btndisabled}
                 >Next</Button>
             </div>
 

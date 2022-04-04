@@ -1,5 +1,5 @@
-const accountlist = async () => {
-    const { ethereum } = window;
+const accountList = async () => {
+    const { ethereum } = window as any;
     if (typeof ethereum == 'undefined') {
         return {
             type:'error'
@@ -14,5 +14,5 @@ const accountlist = async () => {
 }
 
 export default {
-    accountlist,
+    accountList,
 }

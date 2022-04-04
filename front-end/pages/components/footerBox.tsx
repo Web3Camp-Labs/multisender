@@ -22,7 +22,7 @@ export default function footerBox(){
             <div className="midBox">
                 <div className="lft">&copy; 2022 Web3camp.us</div>
                 <div>
-                    <a href="https://github.com/Web3-Camp" target="_blank" rel="noreferrer">
+                    <a href="https://github.com/Web3-Camp/multisender" target="_blank" rel="noreferrer">
                         <img src="https://web3camp.us/assets/images/GitHub-Mark.png" alt=""/>
                     </a>
                 </div>
