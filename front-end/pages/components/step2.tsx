@@ -1,8 +1,8 @@
-import {Form,Table,Button} from 'react-bootstrap';
+import { Form, Table, Button } from 'react-bootstrap';
 import styled from "styled-components";
-import {ChangeEvent, useEffect, useState} from "react";
-import {useWeb3} from "../api/connect";
-import {ethers, BigNumber} from 'ethers';
+import { ChangeEvent, useEffect, useState } from "react";
+import { useWeb3 } from "../api/connect";
+import { ethers, BigNumber } from 'ethers';
 import TokenAbi from '../abi/ERC20.abi.json';
 
 import senderAbi from '../abi/sender.abi.json';
@@ -73,21 +73,21 @@ const H5Box = styled.h5`
   display: inline-block;
   margin-bottom: 20px;
 `
-interface accountObj{
-    address:string
+interface accountObj {
+    address: string
     amount: number
 }
 
-interface contractAddressObj{
+interface contractAddressObj {
     mainnet: string
     kovan: string
     heco: string
-    hecotest:string
+    hecotest: string
     bsc: string
     bsctest: string
 }
 
-const contracts:contractAddressObj = {
+const contracts: contractAddressObj = {
     mainnet: mainnetConfig.sender,
     kovan: kovanConfig.sender,
     heco: hecoConfig.sender,
@@ -97,7 +97,7 @@ const contracts:contractAddressObj = {
 }
 
 
-export default function Step2(){
+export default function Step2() {
     const { state } = useWeb3();
     const { account, first, web3Provider } = state;
 
@@ -107,11 +107,11 @@ export default function Step2(){
     const [mybalance, setmybalance] = useState<string>('0');
     const [ethBalance, setethBalance] = useState<string>('0');
 
-    const [tablelist,setTablelist] = useState<accountObj[]>([])
+    const [tablelist, setTablelist] = useState<accountObj[]>([])
     const [addressArray, setAddressArray] = useState<string[]>([]);
     const [pageSize] = useState<number>(200); // Default 200 transfer per tx
     const [symbol, setSymbol] = useState<string>('');
-    const [tokenContract, setTokenContract] = useState<ethers.Contract|null>();
+    const [tokenContract, setTokenContract] = useState<ethers.Contract | null>();
     const [multiSenderAddress, setMultiSenderAddress] = useState<string>('');
     const [txURL, setTxURL] = useState<string>('');
     const [selected, setselected] = useState<string>('');
@@ -120,13 +120,13 @@ export default function Step2(){
     const [txHashList, setTxHashList] = useState<string[]>([]);
     const [txHash, setTxHash] = useState<string>('');
 
-    useEffect(()=>{
-        if( first == null ) return;
-        const { amounts ,tokenAddress, decimals }  = first;
+    useEffect(() => {
+        if (first == null) return;
+        const { amounts, tokenAddress, decimals } = first;
 
         // Split addresses
         let amountlist = amounts.split('\n');
-        let arr:accountObj[] = [];
+        let arr: accountObj[] = [];
         amountlist.map(item => {
             if (!item) return;
             arr.push({
@@ -150,10 +150,10 @@ export default function Step2(){
         } else { // ERC20
             handleERC20();
         }
-    },[first])
+    }, [first])
 
     const setTotal = () => {
-        if(first == null )return;
+        if (first == null) return;
         const { amounts } = first;
 
         let lines = amounts.split('\n');
@@ -190,7 +190,7 @@ export default function Step2(){
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
     }
 
-    const initMultiSenderAddress= async () => {
+    const initMultiSenderAddress = async () => {
 
         let url = null;
 
@@ -229,18 +229,18 @@ export default function Step2(){
 
 
     };
-    useEffect(()=>{
-        if(tokenContract == null || !multiSenderAddress) return;
+    useEffect(() => {
+        if (tokenContract == null || !multiSenderAddress) return;
         getAllowance()
 
-    },[tokenContract,multiSenderAddress])
+    }, [tokenContract, multiSenderAddress])
 
-    useEffect(()=>{
+    useEffect(() => {
         initMultiSenderAddress()
-    },[])
+    }, [])
 
-    const getAllowance = async() =>{
-        if(tokenContract==null || account == null) return;
+    const getAllowance = async () => {
+        if (tokenContract == null || account == null) return;
         const allowance = await tokenContract.allowance(account, multiSenderAddress);
         console.log("My allowance: ", allowance.toString());
         setAllowance(ethers.utils.formatEther(allowance));
@@ -260,7 +260,7 @@ export default function Step2(){
         setethBalance(ethers.utils.formatEther(ethBalance));
     }
 
-    const handleETH = async() =>{
+    const handleETH = async () => {
         setTokenContract(null);
         setAllowance('0');
         setSymbol("ETH");
@@ -272,24 +272,24 @@ export default function Step2(){
         setethBalance(ethBalanceAfter);
     }
 
-    const handleERC20 = async () =>{
-        if(first == null )return;
+    const handleERC20 = async () => {
+        if (first == null) return;
         const { tokenAddress } = first;
-        const token= new ethers.Contract(tokenAddress,TokenAbi,web3Provider );
+        const token = new ethers.Contract(tokenAddress, TokenAbi, web3Provider);
         await token.deployed();
         console.log('Send ERC20 token, token address: ', tokenAddress, token);
         setTokenContract(token);
 
     }
 
-    const handleRadio = (e:ChangeEvent) => {
+    const handleRadio = (e: ChangeEvent) => {
         const { value } = e.target as HTMLInputElement
         setselected(value)
     }
 
     const doBatchSend = async () => {
-        if(first == null )return;
-        const {  tokenAddress } = first;
+        if (first == null) return;
+        const { tokenAddress } = first;
         if (tokenAddress === '0x000000000000000000000000000000000000bEEF') { // Ether
             // Send Ether
             sendEther();
@@ -302,8 +302,8 @@ export default function Step2(){
 
     const sendEther = async () => {
 
-        if(first == null) return;
-        const { amounts , tokenAddress } = first;
+        if (first == null) return;
+        const { amounts, tokenAddress } = first;
         setshowLoading(true);
         settips('Waiting...');
 
@@ -340,10 +340,6 @@ export default function Step2(){
             _totalAmount = _totalAmount.add(BigNumber.from(amountWei));
         }
 
-        let pageNum = Math.ceil(_addressArray.length / pageSize);
-        let addressArr = _addressArray.slice(0, pageSize);
-        let amountWeiArr = _amountWeiArray.slice(0, pageSize);
-
         console.log("total amount: ", _totalAmount);
         console.log("total amount string: ", ethers.utils.formatEther(_totalAmount));
 
@@ -355,6 +351,10 @@ export default function Step2(){
         console.log('multiSender: ', multiSender);
         console.log('multiSender estimateGas', multiSender.estimateGas);
 
+        // Estimate gas
+        // let pageNum = Math.ceil(_addressArray.length / pageSize);
+        // let addressArr = _addressArray.slice(0, pageSize);
+        // let amountWeiArr = _amountWeiArray.slice(0, pageSize);
         // let gas = await multiSender.estimateGas.batchSendEther(addressArr, amountWeiArr);
 
         // // fixme: need handle price and error here!
@@ -372,7 +372,7 @@ export default function Step2(){
 
         // Step-2: Sending Ether...
         let txIndex = 0;
-        let txHashArr:string[] = [];
+        let txHashArr: string[] = [];
         for (let index = 0; index < addressArray.length; index += pageSize) {
             txIndex++;
             let addressArr = _addressArray.slice(index, index + pageSize);
@@ -382,7 +382,7 @@ export default function Step2(){
 
             settips(`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
 
-            await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, {from: account, value: ethers.utils.hexValue(sendValue)}).then((data: { hash: string; }) => {
+            await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { from: account, value: ethers.utils.hexValue(sendValue) }).then((data: { hash: string; }) => {
                 console.log('batchSendEther', data);
                 txHashArr.push(data.hash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
@@ -397,20 +397,20 @@ export default function Step2(){
     }
 
     const sendERC20Token = async () => {
-        if(first == null || tokenContract == null) return;
+        if (first == null || tokenContract == null) return;
         setshowLoading(true);
         settips('Waiting...');
 
         const { amounts, tokenAddress } = first;
 
-        const multiSender = new ethers.Contract(multiSenderAddress,senderAbi, web3Provider);
+        const multiSender = new ethers.Contract(multiSenderAddress, senderAbi, web3Provider);
         await multiSender.deployed();
 
         const signer = web3Provider.getSigner(account);
         console.log('signer: ', signer);
         console.log('multiSender: ', multiSender);
-        
-        console.log(selected)
+
+        console.log(selected);
         const decimals = await tokenContract.decimals();
         console.log('Decimals: ', decimals);
 
@@ -457,16 +457,16 @@ export default function Step2(){
                     setTxHash(data.hash);
                 }).catch((err: any) => {
                     console.error('approve error: ', err);
-                    setshowLoading(false)
+                    setshowLoading(false);
                 });
             } else {
-                await tokenContract.connect(signer).approve(multiSenderAddress, _totalAmount).then((data: { hash: string}) => {
+                await tokenContract.connect(signer).approve(multiSenderAddress, _totalAmount).then((data: { hash: string }) => {
                     console.log('txHash', data);
-                    settips('Approve in progress...')
+                    settips('Approve in progress...');
                     setTxHash(data.hash);
                 }).catch((err: any) => {
                     console.error('approve error: ', err);
-                    setshowLoading(false)
+                    setshowLoading(false);
                 });
             }
         } else {
@@ -475,7 +475,7 @@ export default function Step2(){
 
         // Step-2: Sending
         let txIndex = 0;
-        let txHashArr:string[] = [];
+        let txHashArr: string[] = [];
 
         for (let index = 0; index < _addressArray.length; index += pageSize) {
             txIndex++;
@@ -485,14 +485,14 @@ export default function Step2(){
             settips(`Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
 
             await multiSender.connect(signer).batchSendERC20(tokenAddress, addressArr, amountArr).then((data: { hash: string; }) => {
-                    console.log('batchSendERC20', data);
-                    txHashArr.push(data.hash);
-                    if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
-                        setshowLoading(false);
-                    }
-                }).catch((err: any) => {
+                console.log('batchSendERC20', data);
+                txHashArr.push(data.hash);
+                if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
-                });
+                }
+            }).catch((err: any) => {
+                setshowLoading(false);
+            });
 
         }
         setTxHashList(txHashArr);
@@ -500,31 +500,31 @@ export default function Step2(){
 
 
     return <Box>
-            <div className="mb-3">
-                <h5>List of recipients</h5>
-                <TableBox>
-                    <Table  striped borderless hover className="tableStyle">
-                        <thead>
+        <div className="mb-3">
+            <h5>List of recipients</h5>
+            <TableBox>
+                <Table striped borderless hover className="tableStyle">
+                    <thead>
                         <tr>
                             <th>Address</th>
                             <th>Amount</th>
                         </tr>
-                        </thead>
-                        <tbody>
+                    </thead>
+                    <tbody>
                         {
                             tablelist.map((i, index) => (<tr key={`${i.address}_${index}`}>
                                 <td>{i.address}</td>
                                 <td>{i.amount}</td>
                             </tr>))
                         }
-                        </tbody>
-                    </Table>
-                </TableBox>
-            </div>
-            <div className="mb-3">
-                <h5>Summary</h5>
-                <Table bordered >
-                    <tbody>
+                    </tbody>
+                </Table>
+            </TableBox>
+        </div>
+        <div className="mb-3">
+            <h5>Summary</h5>
+            <Table bordered >
+                <tbody>
                     <tr>
                         <td width="50%">
                             <div className='numbers'>{totalAmount} {symbol}</div>
@@ -566,42 +566,42 @@ export default function Step2(){
                         </td>
                     </tr>
 
-                    </tbody>
-                </Table>
-            </div>
+                </tbody>
+            </Table>
+        </div>
 
-            <div className="mb-4">
-                <H5Box>Amount to Approve</H5Box>
-                <Form.Group className="ml2">
-                    <div className="mb-2">
-                        <Form.Check
-                            type="radio"
-                            inline
-                            label="Extra amount to sent"
-                            name='approveAmount'
-                            onChange={handleRadio}
-                            value='extra'
-                        />
-                    </div>
-                    <div>
-                        <Form.Check
-                            inline
-                            type="radio"
-                            label="Unlimited amount"
-                            name='approveAmount'
-                            value='unlimited'
-                            onChange={handleRadio}
-                        />
-                    </div>
-                </Form.Group>
-            </div>
+        <div className="mb-4">
+            <H5Box>Amount to Approve</H5Box>
+            <Form.Group className="ml2">
+                <div className="mb-2">
+                    <Form.Check
+                        type="radio"
+                        inline
+                        label="Extra amount to sent"
+                        name='approveAmount'
+                        onChange={handleRadio}
+                        value='extra'
+                    />
+                </div>
+                <div>
+                    <Form.Check
+                        inline
+                        type="radio"
+                        label="Unlimited amount"
+                        name='approveAmount'
+                        value='unlimited'
+                        onChange={handleRadio}
+                    />
+                </div>
+            </Form.Group>
+        </div>
 
-            <div className="ml2">
-                <Button
-                    variant="flat"
-                    onClick={doBatchSend}
-                >Submit</Button>
-            </div>
+        <div className="ml2">
+            <Button
+                variant="flat"
+                onClick={doBatchSend}
+            >Submit</Button>
+        </div>
 
 
 
