@@ -5,7 +5,7 @@ import {useWeb3} from "../api/connect";
 import {ethers, BigNumber} from 'ethers';
 import TokenAbi from '../abi/ERC20.abi.json';
 
-import senderAbi from '../abi/sender.abi';
+import senderAbi from '../abi/sender.abi.json';
 
 import kovanConfig from '../config/kovan.json';
 import mainnetConfig from '../config/mainnet.json';
@@ -101,17 +101,18 @@ export default function Step2(){
     const { state } = useWeb3();
     const { account, first, web3Provider } = state;
 
-    const [tablelist,setTablelist] = useState<accountObj[]>([])
-    const [totalAmount, setTotalAmount] = useState<number>(0);
-    const [allowance, setAllowance] = useState<number>(0);
-    const [addressArray, setAddressArray] = useState<string[]>([]);
+    const [totalAmount, setTotalAmount] = useState<string>('0');
+    const [allowance, setAllowance] = useState<string>('0');
     const [amountWeiArray, setAmountWeiArray] = useState<string[]>([]);
-    const [pageSize] = useState<number>(200); // Default 200 transfer per tx
-    const [mybalance, setmybalance] = useState<number>(0);
+    const [mybalance, setmybalance] = useState<string>('0');
     const [ethBalance, setethBalance] = useState<string>('0');
+
+    const [tablelist,setTablelist] = useState<accountObj[]>([])
+    const [addressArray, setAddressArray] = useState<string[]>([]);
+    const [pageSize] = useState<number>(200); // Default 200 transfer per tx
     const [symbol, setSymbol] = useState<string>('');
     const [tokenContract, setTokenContract] = useState<ethers.Contract|null>();
-    const [senderAddress, setSenderAddress] = useState<string>('');
+    const [multiSenderAddress, setMultiSenderAddress] = useState<string>('');
     const [txURL, setTxURL] = useState<string>('');
     const [selected, setselected] = useState<string>('');
     const [showLoading, setshowLoading] = useState<boolean>(false);
@@ -123,6 +124,7 @@ export default function Step2(){
         if( first == null ) return;
         const { amounts ,tokenAddress, decimals }  = first;
 
+        // Split addresses
         let amountlist = amounts.split('\n');
         let arr:accountObj[] = [];
         amountlist.map(item => {
@@ -138,28 +140,17 @@ export default function Step2(){
             decimals,
             transaction: arr
         };
+        console.log("=====", obj);
+
         setTablelist(arr);
         setTotal();
+
         if (tokenAddress === '0x000000000000000000000000000000000000bEEF') { // Ether
-            setTokenContract(null);
-            setAllowance(0);
-            setSymbol("ETH");
-            handleBalance()
-
+            handleETH();
         } else { // ERC20
-
-            GetTokenBalance()
+            handleERC20();
         }
     },[first])
-
-    const handleBalance = async() =>{
-        const signer = web3Provider.getSigner(account);
-        const ethBalance = await signer.getBalance()
-
-        const ethBalanceAfter = await ethers.utils.formatEther(ethBalance.toString());
-        setmybalance(Number(ethBalanceAfter));
-        setethBalance(ethBalanceAfter);
-    }
 
     const setTotal = () => {
         if(first == null )return;
@@ -193,13 +184,13 @@ export default function Step2(){
             totalAmount += amount;
         }
 
-        setTotalAmount(totalAmount);
+        setTotalAmount(totalAmount.toString());
         setAddressArray(addressArray);
         setAmountWeiArray(_amountWeiArray);
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
     }
 
-    const initSenderAddress= async () => {
+    const initMultiSenderAddress= async () => {
 
         let url = null;
 
@@ -231,49 +222,61 @@ export default function Step2(){
             console.error('Unsupported network!!!!');
             return;
         }
-        setSenderAddress(sender)
+        setMultiSenderAddress(sender)
         setTxURL(url);
 
-        console.log("sender address: ", senderAddress);
+        console.log("sender address: ", multiSenderAddress);
 
 
     };
     useEffect(()=>{
-        if(tokenContract == null || !senderAddress) return;
+        if(tokenContract == null || !multiSenderAddress) return;
         getAllowance()
 
-    },[tokenContract,senderAddress])
+    },[tokenContract,multiSenderAddress])
 
     useEffect(()=>{
-        initSenderAddress()
+        initMultiSenderAddress()
     },[])
 
     const getAllowance = async() =>{
         if(tokenContract==null || account == null) return;
-        const allowance = await tokenContract.allowance(account, senderAddress);
+        const allowance = await tokenContract.allowance(account, multiSenderAddress);
         console.log("My allowance: ", allowance.toString());
-
+        setAllowance(ethers.utils.formatEther(allowance));
 
         const symbol = await tokenContract.symbol();
         console.log('Token symbol: ', symbol);
-        setSymbol(symbol)
-
+        setSymbol(symbol);
 
         const mybalance = await tokenContract.balanceOf(account);
-        const balanceAfter = ethers.utils.formatEther(mybalance)
-        console.log("My balance: ", Number(balanceAfter));
-        setmybalance(Number(balanceAfter))
+        const balanceAfter = ethers.utils.formatEther(mybalance);
+        console.log("My balance: ", balanceAfter);
+        setmybalance(balanceAfter);
+
+        const signer = web3Provider.getSigner(account);
+        const ethBalance = await signer.getBalance();
+
+        setethBalance(ethers.utils.formatEther(ethBalance));
+    }
+
+    const handleETH = async() =>{
+        setTokenContract(null);
+        setAllowance('0');
+        setSymbol("ETH");
 
         const signer = web3Provider.getSigner(account);
         const ethBalance = await signer.getBalance()
-
-        setethBalance(ethers.utils.formatEther(ethBalance))
+        let ethBalanceAfter = ethers.utils.formatEther(ethBalance);
+        setmybalance(ethBalanceAfter);
+        setethBalance(ethBalanceAfter);
     }
 
-    const GetTokenBalance = async () =>{
+    const handleERC20 = async () =>{
         if(first == null )return;
         const { tokenAddress } = first;
-        const token= await new ethers.Contract(tokenAddress,TokenAbi,web3Provider );
+        const token= new ethers.Contract(tokenAddress,TokenAbi,web3Provider );
+        await token.deployed();
         console.log('Send ERC20 token, token address: ', tokenAddress, token);
         setTokenContract(token);
 
@@ -344,7 +347,7 @@ export default function Step2(){
         console.log("total amount: ", _totalAmount);
         console.log("total amount string: ", ethers.utils.parseEther(_totalAmount.toString()));
 
-        const mutliSender = await new ethers.Contract(senderAddress,senderAbi, web3Provider);
+        const mutliSender = await new ethers.Contract(multiSenderAddress,senderAbi, web3Provider);
 
         let encodedData = await mutliSender.batchSendEther(addressArr, amountWeiArr).encodeABI({ from: account });
 
@@ -354,7 +357,7 @@ export default function Step2(){
         //     from: account,
         //     data: encodedData,
         //     value: web3.utils.toHex(_totalAmount.toString()),
-        //     to: senderAddress
+        //     to: multiSenderAddress
         // });
 
         const signer = web3Provider.getSigner(account);
@@ -415,7 +418,7 @@ export default function Step2(){
 
         const { amounts, tokenAddress } = first;
 
-        const mutliSender = await new ethers.Contract(senderAddress,senderAbi, web3Provider);
+        const mutliSender = await new ethers.Contract(multiSenderAddress,senderAbi, web3Provider);
 
         console.log(selected)
         const decimals = await tokenContract.decimals();
@@ -426,7 +429,7 @@ export default function Step2(){
             if (selected === 'unlimited') {
                 const totalSupply = await tokenContract.totalSupply();
 
-                await tokenContract.methods.approve(senderAddress, totalSupply).send({ from: account }).then(data => {
+                await tokenContract.methods.approve(multiSenderAddress, totalSupply).send({ from: account }).then(data => {
                     console.log('txHash', data);
                     settips('Unlimited Approve in progress...')
                     setTxHash(data.transactionHash)
@@ -434,7 +437,7 @@ export default function Step2(){
                     setshowLoading(false)
                 });
             } else {
-                await tokenContract.methods.approve(senderAddress, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data => {
+                await tokenContract.methods.approve(multiSenderAddress, web3.utils.toWei(totalAmount.toString())).send({ from: account }).then(data => {
                     console.log('txHash', data);
                     settips('Approve in progress...')
                     setTxHash(data.transactionHash)
