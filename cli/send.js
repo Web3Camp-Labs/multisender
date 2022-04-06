@@ -5,8 +5,8 @@ const colors = require("colors");
 require("dotenv").config();
 
 const pageSize = 200; // How many tx per transaction
-const startPage = 11;
-const dryrun = false;
+const startPage = 0;
+const dryrun = true;
 
 const NETWORKS = {
     bsctest: {
