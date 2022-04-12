@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const pageSize = 200; // How many tx per transaction
 const startPage = 0;
-const dryrun = true;
+const dryrun = false;
 
 const NETWORKS = {
     bsctest: {
@@ -138,7 +138,8 @@ async function execute() {
         }
 
         console.log(`Approve ${totalAmount} for contract ${senderContract.address} ...`);
-        await tokenContract.approve(senderContract.address, ethers.utils.parseEther(totalAmount.toString()));
+        // await tokenContract.approve(senderContract.address, ethers.utils.parseEther(totalAmount.toString()));
+        await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256);
 
         console.log("Send in progress...");
 
