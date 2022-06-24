@@ -2,17 +2,32 @@ const { ethers } = require("ethers");
 const fs = require("fs");
 const parse = require('csv-parse/lib/sync');
 const colors = require("colors");
+const { exit } = require("process");
 require("dotenv").config();
 
 const pageSize = 200; // How many tx per transaction
 const startPage = 0;
 const dryrun = false;
+const handleError = true;
+
+const networkName = "mainnet";
+const inputFile = "./input.csv";
 
 const NETWORKS = {
     bsctest: {
         url: "https://data-seed-prebsc-1-s1.binance.org:8545",
         accounts: [process.env.TESTNET_PRIVATE_KEY],
+        senderAddress: "",
+        senderAbiPath: "../abis/other/sender.abi.json",
+        erc20AbisPath: "../abis/other/ERC20.abi.json"
     },
+    mainnet: {
+        url: `https://mainnet.infura.io/v3/${process.env.INFURA_ID}`,
+        accounts: [process.env.MAINNET_PRIVATE_KEY],
+        senderAddress: "0x71402BD4ccE356C41Bb3c5070a0E124E9989cbc0",
+        senderAbiPath: "../abis/mainnet/sender.abi.json",
+        erc20AbisPath: "../abis/mainnet/ERC20.abi.json"
+    }
 };
 
 function loadcsv(path) {
@@ -32,15 +47,24 @@ function loadcsv(path) {
 }
 
 async function execute() {
-    console.log(colors.green(`========== started ==========`));
+    console.log(colors.green(`========== Multisend started ==========`));
+
+    let network;
+    if (networkName == "mainnet") {
+        network = NETWORKS.mainnet;
+    } else if (networkName == "bsctest") {
+        network = NETWORKS.bsctest;
+    } else {
+        console.error("unexpected network");
+        exit(1);
+    }
+    console.log(network);
 
     // Step 1 Prepare
 
     // Step 1.1 Check csv columns
-    let data = loadcsv("./inputs.csv");
-
+    let data = loadcsv(inputFile);
     // console.log(colors.green(`========== data ==========`), data);
-
     data = data
         .map(r => { return { ...r, address: r.address.trim(), amount: parseFloat(r.amount) } })
         .filter(r => r.address && r.amount);
@@ -49,7 +73,6 @@ async function execute() {
         console.error('Empty csv file or missing columns');
         return;
     }
-
     // console.log(colors.green(`========== data ==========`), data);
 
     // Step 1.2 Check addresses
@@ -70,14 +93,13 @@ async function execute() {
         }
     });
 
-    // if (hasError) {
-    //     console.error(colors.red("Error found. Please check your csv file."));
-    //     return;
-    // }
+    if (handleError && hasError) {
+        console.error(colors.red("Error found. Please check your csv file."));
+        return;
+    }
 
     // Step 1.3 Prepare Address List and Amount List
     let totalAmount = 0;
-
     let addresses = [];
     let amounts = [];
 
@@ -97,14 +119,15 @@ async function execute() {
     }
 
     // Step 1.4 Prepare Smart Contracts
-    const senderAddress = JSON.parse(fs.readFileSync("../front-end/pages/config/bsctest.json", "utf8"))["sender"];
-    const senderABI = JSON.parse(fs.readFileSync("../front-end/pages/abi/sender.abi.json", "utf8"));
+    // const senderAddress = JSON.parse(fs.readFileSync("../front-end/pages/config/mainnet.json", "utf8"))["sender"];
+    const senderAddress = network.senderAddress;
+    const senderABI = JSON.parse(fs.readFileSync(network.senderAbiPath, "utf8"));
 
-    const tokenAddress = '0x11DBa5229EEF74eb7F8918685151572672ec8830'; // FIXME: test USDT, to be replaced with parameter
-    const tokenABI = JSON.parse(fs.readFileSync("../front-end/pages/abi/ERC20.abi.json", "utf8"));
+    const tokenAddress = process.env.TOKEN_ADDRESS; // FIXME: test USDT, to be replaced with parameter
+    const tokenABI = JSON.parse(fs.readFileSync(network.erc20AbisPath, "utf8"));
 
-    const provider = new ethers.providers.JsonRpcProvider(NETWORKS.bsctest.url);
-    const wallet = new ethers.Wallet(NETWORKS.bsctest.accounts[0], provider);
+    const provider = new ethers.providers.JsonRpcProvider(NETWORKS.mainnet.url);
+    const wallet = new ethers.Wallet(NETWORKS.mainnet.accounts[0], provider);
 
     const senderContract = new ethers.Contract(senderAddress, senderABI, wallet);
     await senderContract.deployed();
@@ -137,10 +160,14 @@ async function execute() {
             return;
         }
 
-        console.log(`Approve ${totalAmount} for contract ${senderContract.address} ...`);
-        // await tokenContract.approve(senderContract.address, ethers.utils.parseEther(totalAmount.toString()));
-        await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256);
+        let allowence = await tokenContract.allowenceOf(senderContract.address);
+        if (allowence < ethers.utils.parseEther(totalAmount.toString())) {
+            console.log(`Approve MaxUint256 for contract ${senderContract.address} ...`);
+            await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256);
+        }
 
+        // await tokenContract.approve(senderContract.address, ethers.utils.parseEther(totalAmount.toString()));
+        // await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256);
         console.log("Send in progress...");
 
         for (let index = startPage * pageSize; index < addresses.length; index += pageSize) {
@@ -148,8 +175,19 @@ async function execute() {
             const addressArray = addresses.slice(index, index + pageSize);
             const amountArray = amounts.slice(index, index + pageSize);
 
-            let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray);
-            console.log(`tx: ${res.tx}`);
+            if (networkName === "mainnet") { // FIXME: Ethereum Mainnet is still using old version. 
+                let res = await senderContract.batchSendToken(tokenContract.address, addressArray, amountArray);
+                await res.wait();
+                console.log(`tx: ${res.tx}`);
+            } else {
+                let feeData = await provider.getFeeData();
+                console.log(feeData);
+                let gasCost = await senderContract.estimateGas.batchSendERC20(tokenContract.address, addressArray, amountArray, { gasPrice: feeData.maxFeePerGas, gasLimit: 3e7 });
+                console.log('estimate gas: ', gasCost);
+                let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray);
+                await res.wait();
+                console.log(`tx: ${res.tx}`);
+            }
         }
 
         const balance = await tokenContract.balanceOf(wallet.getAddress());
@@ -158,9 +196,7 @@ async function execute() {
         console.log(`My balance ${mybalance}`);
     }
 
-
-
-    console.log(colors.green(`========== ended ==========`));
+    console.log(colors.green(`========== Multisend ended ==========`));
 }
 
 
