@@ -17,10 +17,19 @@ const NETWORKS = {
     bsctest: {
         url: "https://data-seed-prebsc-1-s1.binance.org:8545",
         accounts: [process.env.TESTNET_PRIVATE_KEY],
-        senderAddress: "",
+        senderAddress: "0x845c08d0ba1f8db01b50e411e3fa95224a2c2951",
         senderAbiPath: "../abis/other/sender.abi.json",
         erc20AbisPath: "../abis/other/ERC20.abi.json"
     },
+
+    bsc: {
+        url: "https://bsc-dataseed1.binance.org",
+        accounts: [process.env.TESTNET_PRIVATE_KEY],
+        senderAddress: "0x2Ba47E18597a6478eC0c481a765B8D1986577A39",
+        senderAbiPath: "../abis/other/sender.abi.json",
+        erc20AbisPath: "../abis/other/ERC20.abi.json"
+    },
+
     mainnet: {
         url: `https://mainnet.infura.io/v3/${process.env.INFURA_ID}`,
         accounts: [process.env.MAINNET_PRIVATE_KEY],
@@ -52,6 +61,8 @@ async function execute() {
     let network;
     if (networkName == "mainnet") {
         network = NETWORKS.mainnet;
+    } else if (networkName == "bsc") {
+        network = NETWORKS.bsc;
     } else if (networkName == "bsctest") {
         network = NETWORKS.bsctest;
     } else {
