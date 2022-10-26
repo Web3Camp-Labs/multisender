@@ -32,6 +32,7 @@ const keys = {
   api: process.env.INFURA,
   kovan: process.env.KOVAN_KEY,
   main: process.env.MAIN_KEY,
+  polygon: process.env.POLYGON_KEY
 }
 
 module.exports = {
@@ -75,7 +76,7 @@ module.exports = {
       ),
       network_id: 1,         // Mainnet's id
       gas: 55000,            // A tight gas limit, original 5500000
-      gasPrice: 50_000_000_000,  // 230 Gwei
+      gasPrice: 200_000_000_000,  // 230 Gwei
       confirmations: 0,      // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 100,    // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true,      // Skip dry run before migrations? (default: false for public nets )
@@ -107,7 +108,15 @@ module.exports = {
       confirmations: 2,    // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
-    }
+    },
+
+    polygon: {
+      provider: () => new HDWalletProvider(keys.polygon, "https://polygon-mainnet.g.alchemy.com/v2/HnyOE6plvFb9l5AQfiE6vDYmE83bCrnd"),
+      network_id:137,
+      gas: 20000000,
+      gasPrice: 500_000_000_000,
+      skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
+    },
 
     // Another network with more advanced options...
     // advanced: {
