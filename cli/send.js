@@ -10,32 +10,40 @@ const startPage = 0;
 const dryrun = false;
 const handleError = true;
 
-const networkName = "mainnet";
-const inputFile = "./input.csv";
+const networkName = "polygon";
+const inputFile = "./inputs.csv";
 
 const NETWORKS = {
     bsctest: {
         url: "https://data-seed-prebsc-1-s1.binance.org:8545",
         accounts: [process.env.TESTNET_PRIVATE_KEY],
         senderAddress: "0x845c08d0ba1f8db01b50e411e3fa95224a2c2951",
-        senderAbiPath: "../abis/other/sender.abi.json",
-        erc20AbisPath: "../abis/other/ERC20.abi.json"
+        senderAbiPath: "./abis/other/sender.abi.json",
+        erc20AbisPath: "./abis/other/ERC20.abi.json"
     },
 
     bsc: {
         url: "https://bsc-dataseed1.binance.org",
         accounts: [process.env.TESTNET_PRIVATE_KEY],
         senderAddress: "0x2Ba47E18597a6478eC0c481a765B8D1986577A39",
-        senderAbiPath: "../abis/other/sender.abi.json",
-        erc20AbisPath: "../abis/other/ERC20.abi.json"
+        senderAbiPath: "./abis/other/sender.abi.json",
+        erc20AbisPath: "./abis/other/ERC20.abi.json"
     },
 
     mainnet: {
         url: `https://mainnet.infura.io/v3/${process.env.INFURA_ID}`,
         accounts: [process.env.MAINNET_PRIVATE_KEY],
         senderAddress: "0x71402BD4ccE356C41Bb3c5070a0E124E9989cbc0",
-        senderAbiPath: "../abis/mainnet/sender.abi.json",
-        erc20AbisPath: "../abis/mainnet/ERC20.abi.json"
+        senderAbiPath: "./abis/mainnet/sender.abi.json",
+        erc20AbisPath: "./abis/mainnet/ERC20.abi.json"
+    },
+
+    polygon: {
+        url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_ID}`,
+        accounts: [process.env.POLYGON_PRIVATE_KEY],
+        senderAddress: "0x0e5d3Eb41710Ad7d67893a548ba082c62B7D85be",
+        senderAbiPath: "./abis/other/sender.abi.json",
+        erc20AbisPath: "./abis/other/ERC20.abi.json"
     }
 };
 
@@ -65,6 +73,8 @@ async function execute() {
         network = NETWORKS.bsc;
     } else if (networkName == "bsctest") {
         network = NETWORKS.bsctest;
+    } else if (networkName == "polygon") {
+        network = NETWORKS.polygon;
     } else {
         console.error("unexpected network");
         exit(1);
@@ -72,6 +82,30 @@ async function execute() {
     console.log(network);
 
     // Step 1 Prepare
+
+    // Step 1.4 Prepare Smart Contracts
+    // const senderAddress = JSON.parse(fs.readFileSync("../front-end/pages/config/mainnet.json", "utf8"))["sender"];
+    const senderAddress = network.senderAddress;
+    const senderABI = JSON.parse(fs.readFileSync(network.senderAbiPath, "utf8"));
+
+    const tokenAddress = process.env.TOKEN_ADDRESS; // FIXME: test USDT, to be replaced with parameter
+    const tokenABI = JSON.parse(fs.readFileSync(network.erc20AbisPath, "utf8"));
+
+    const provider = new ethers.providers.JsonRpcProvider(network.url);
+    const wallet = new ethers.Wallet(network.accounts[0], provider);
+
+    const senderContract = new ethers.Contract(senderAddress, senderABI, wallet);
+    await senderContract.deployed();
+    const tokenContract = new ethers.Contract(tokenAddress, tokenABI, wallet);
+    await tokenContract.deployed();
+
+    console.log(colors.green(`========== signer address ==========`), wallet.getAddress());
+    console.log(colors.green(`========== senderContract ==========`), senderContract.address);
+    console.log(colors.green(`========== tokenContract ==========`), tokenContract.address);
+
+    let decimals = await tokenContract.decimals();
+    console.log(colors.green(`========== token decimals =========`), decimals);
+    // return;
 
     // Step 1.1 Check csv columns
     let data = loadcsv(inputFile);
@@ -121,7 +155,7 @@ async function execute() {
                 // console.log(`Address : ${key}, Amount : ${element.amount}`);
 
                 addresses.push(key);
-                amounts.push(ethers.utils.parseEther(element.amount.toString()));
+                amounts.push(ethers.utils.parseUnits(element.amount.toString(), decimals));
 
                 totalAmount += element.amount;
             }
@@ -129,31 +163,13 @@ async function execute() {
         console.log(`Total Amount ${totalAmount}`);
     }
 
-    // Step 1.4 Prepare Smart Contracts
-    // const senderAddress = JSON.parse(fs.readFileSync("../front-end/pages/config/mainnet.json", "utf8"))["sender"];
-    const senderAddress = network.senderAddress;
-    const senderABI = JSON.parse(fs.readFileSync(network.senderAbiPath, "utf8"));
 
-    const tokenAddress = process.env.TOKEN_ADDRESS; // FIXME: test USDT, to be replaced with parameter
-    const tokenABI = JSON.parse(fs.readFileSync(network.erc20AbisPath, "utf8"));
-
-    const provider = new ethers.providers.JsonRpcProvider(NETWORKS.mainnet.url);
-    const wallet = new ethers.Wallet(NETWORKS.mainnet.accounts[0], provider);
-
-    const senderContract = new ethers.Contract(senderAddress, senderABI, wallet);
-    await senderContract.deployed();
-    const tokenContract = new ethers.Contract(tokenAddress, tokenABI, wallet);
-    await tokenContract.deployed();
-
-    console.log(colors.green(`========== signer address ==========`), wallet.getAddress());
-    console.log(colors.green(`========== senderContract ==========`), senderContract.address);
-    console.log(colors.green(`========== tokenContract ==========`), tokenContract.address);
 
 
     // Step 1.5 Check Balance
     {
         const balance = await tokenContract.balanceOf(wallet.getAddress());
-        const mybalance = parseFloat(ethers.utils.formatEther(balance));
+        const mybalance = parseFloat(ethers.utils.formatUnits(balance, decimals));
 
         console.log(`My balance ${mybalance}`);
         if (mybalance < totalAmount) {
@@ -171,11 +187,15 @@ async function execute() {
             return;
         }
 
-        let allowence = await tokenContract.allowenceOf(senderContract.address);
-        if (allowence < ethers.utils.parseEther(totalAmount.toString())) {
-            console.log(`Approve MaxUint256 for contract ${senderContract.address} ...`);
-            await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256);
-        }
+        let feeData = await provider.getFeeData();
+        console.log(feeData);
+
+        // let allowence = await tokenContract.allowenceOf(senderContract.address);
+        // if (allowence < ethers.utils.parseUnits(totalAmount.toString(), decimals)) {
+        console.log(`Approve MaxUint256 for contract ${senderContract.address} ...`);
+        let res = await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256, { gasPrice: 100_000_000_000});
+        await res.wait();
+        // }
 
         // await tokenContract.approve(senderContract.address, ethers.utils.parseEther(totalAmount.toString()));
         // await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256);
@@ -193,16 +213,22 @@ async function execute() {
             } else {
                 let feeData = await provider.getFeeData();
                 console.log(feeData);
-                let gasCost = await senderContract.estimateGas.batchSendERC20(tokenContract.address, addressArray, amountArray, { gasPrice: feeData.maxFeePerGas, gasLimit: 3e7 });
-                console.log('estimate gas: ', gasCost);
-                let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray);
+                console.log('maxFeePergas: ', feeData.maxFeePerGas.toNumber());
+                console.log('maxPriorityFeePerGas', feeData.maxPriorityFeePerGas.toNumber())
+                // let gasCost = await senderContract.estimateGas.batchSendERC20(tokenContract.address, addressArray, amountArray, { gasPrice: feeData.maxFeePerGas, gasLimit: 3e7 });
+                // console.log('estimate gas: ', gasCost);
+                // return;
+                let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray, { gasPrice: 100_000_000_000, gasLimit: 2e7 });
+
+                console.log(`tx:`, res);
+
                 await res.wait();
                 console.log(`tx: ${res.tx}`);
             }
         }
 
         const balance = await tokenContract.balanceOf(wallet.getAddress());
-        const mybalance = ethers.utils.formatEther(balance);
+        const mybalance = ethers.utils.formatUnits(balance, decimals);
 
         console.log(`My balance ${mybalance}`);
     }

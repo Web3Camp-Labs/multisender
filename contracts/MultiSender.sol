@@ -2,9 +2,11 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MultiSender is Ownable {
+    using SafeERC20 for IERC20;
     constructor() {}
 
     uint16 public arrayLimit = 200;
@@ -24,7 +26,7 @@ contract MultiSender is Ownable {
         IERC20 token = IERC20(_token);
         uint256 total = 0;
         for (uint256 i = 0; i < _targets.length; i++) {
-            require(token.transferFrom(msg.sender, _targets[i], _amounts[i]));
+            token.safeTransferFrom(msg.sender, _targets[i], _amounts[i]);
             total += _amounts[i];
         }
         emit MultisendToken(total, _token);
@@ -70,20 +72,19 @@ contract MultiSender is Ownable {
     }
 
     function claimTokens(address _token) public onlyOwner {
-        address owner = this.owner();
         uint256 balance = 0x0;
-
+        address _owner = this.owner();
         if (_token == address(0x0)) {
             balance = address(this).balance;
-            (bool sent, ) = owner.call{value: balance}("");
+            (bool sent, ) = _owner.call{value: balance}("");
             require(sent, "transfer eth failed");
-            emit ClaimedToken(address(0x0), owner, balance);
+            emit ClaimedToken(address(0x0), _owner, balance);
             return;
         }
 
         IERC20 erc20token = IERC20(_token);
         balance = erc20token.balanceOf(address(this));
-        erc20token.transfer(owner, balance);
-        emit ClaimedToken(_token, owner, balance);
+        erc20token.transfer(_owner, balance);
+        emit ClaimedToken(_token, _owner, balance);
     }
 }
