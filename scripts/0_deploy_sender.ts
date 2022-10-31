@@ -5,11 +5,14 @@ import deployed from "./deployed";
 
 async function main() {
 
+  const [dev] = await ethers.getSigners();
+  console.log(green(`deploy with account: ${dev.address}`));
+
   const MultiSender = await ethers.getContractFactory("MultiSender");
   const sender = await upgrades.deployProxy(MultiSender, []);
   await sender.deployed();
 
-  console.log(deployed)
+  console.log(deployed.contracts)
   deployed.saveAddress('sender', sender.address);
 
   console.log(green(`Deploy MultiSender at:  ${sender.address}`));
