@@ -3,12 +3,16 @@ import { network } from "hardhat";
 import ethereum from "./ethereum";
 import bnbchain from "./bnbchain";
 import polygon from "./polygon";
+import moonbeam from "./moonbeam";
+
+
 import bnbtest from "./bnbchain-test";
 
-var configuration:any;
+var configuration: any;
 
 switch (network.name) {
     case 'ethereum':
+    case 'mainnet':
         configuration = ethereum;
         break;
 
@@ -20,6 +24,10 @@ switch (network.name) {
     case 'polygon':
     case 'matic':
         configuration = polygon;
+        break;
+
+    case 'moonbeam':
+        configuration = moonbeam;
         break;
 
     case 'bnbchain-test':

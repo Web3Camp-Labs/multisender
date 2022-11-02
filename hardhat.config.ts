@@ -15,7 +15,7 @@ dotEnvConfig();
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   networks: {
-    
+
     // test networks
     hardhat: {
       chainId: 31337,
@@ -23,8 +23,9 @@ const config: HardhatUserConfig = {
       blockGasLimit: 0x1fffffffffffff,
       allowUnlimitedContractSize: true
     },
+    
     bsctest: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      url: "https://data-seed-prebsc-1-s2.binance.org:8545",
       accounts: [process.env.TESTNET_PRIVATE_KEY || ''],
       gasPrice: 20_000_000_000
     },

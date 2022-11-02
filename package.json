@@ -16,6 +16,7 @@
     "@types/node": "^18.11.7",
     "chai": "^4.3.6",
     "colors": "^1.4.0",
+    "csv-parse": "^4.15.4",
     "ethers": "^5.7.2",
     "hardhat": "^2.12.1",
     "hardhat-abi-exporter": "^2.10.1",
@@ -36,6 +37,7 @@
     "@openzeppelin/hardhat-upgrades": "^1.21.0",
     "@openzeppelin/test-helpers": "^0.5.16",
     "@openzeppelin/upgrades": "^2.8.0",
+    "commander": "^9.4.1",
     "dotenv": "^16.0.3",
     "ethereumjs-util": "^7.1.5"
   }
