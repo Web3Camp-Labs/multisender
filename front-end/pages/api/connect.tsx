@@ -13,17 +13,17 @@ interface Props{
 }
 
 const connect = async (state:State, dispatch:Dispatch<Action>) => {
+    if (typeof window !== "undefined") {
+        const {web3Provider} = state;
 
-    const {web3Provider} = state;
+        if (web3Provider != null) return;
+        const web3Instance = new ethers.providers.Web3Provider((window as any).ethereum)
 
-    if (web3Provider!=null) return;
-    const web3Instance = new ethers.providers.Web3Provider((window as any).ethereum)
+        if (web3Instance) {
+            dispatch({type: ActionType.CONNECT, payload: web3Instance});
 
-    if(web3Instance){
-        dispatch({type:ActionType.CONNECT, payload:  web3Instance });
-
+        }
     }
-
 };
 
 const DAOContextProvider = (props:Props) => {
