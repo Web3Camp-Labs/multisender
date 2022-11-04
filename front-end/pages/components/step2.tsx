@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { ChangeEvent, useEffect, useState } from "react";
 import { useWeb3 } from "../api/connect";
 import { ethers, BigNumber } from 'ethers';
-import TokenAbi from '../abi/IERC20.json';
+import TokenAbi from '../abi/ERC20.json';
 
 import senderAbi from '../abi/MultiSender.json';
 
