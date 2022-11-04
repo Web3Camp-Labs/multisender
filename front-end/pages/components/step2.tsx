@@ -148,8 +148,8 @@ export default function Step2() {
         let lines = amounts.split('\n');
         let addressArray = [];
         let _amountWeiArray = [];
-        let totalAmount = BigNumber.from('0');
-        let totalAmountAft
+        let totalAmountInner = BigNumber.from('0');
+        let totalAmountAft:string = '';
 
         for (let index = 0; index < lines.length; index++) {
             const line = lines[index]?.trim();
@@ -176,15 +176,15 @@ export default function Step2() {
             _amountWeiArray.push(amountWei);
 
             // totalAmount += amountWei;
-            totalAmount = totalAmount.add(BigNumber.from(amountWei));
+            totalAmountInner = totalAmountInner.add(BigNumber.from(amountWei));
 
-            totalAmountAft = ethers.utils.formatUnits(totalAmount,decimals);
+            totalAmountAft = ethers.utils.formatUnits(totalAmountInner,decimals);
             console.error("====totalAmountAft===",totalAmountAft)
         }
 
-        setTotalAmount(totalAmountAft.toString());
+        setTotalAmount(totalAmountAft);
         setAddressArray(addressArray);
-        setAmountWeiArray(_amountWeiArray);
+        // setAmountWeiArray(_amountWeiArray);
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
     }
 
@@ -241,17 +241,20 @@ export default function Step2() {
     }, [])
 
     const getAllowance = async () => {
+        if (first == null) return;
+
         if (tokenContract == null || account == null) return;
         const allowance = await tokenContract.allowance(account, multiSenderAddress);
         console.log("My allowance: ", allowance.toString());
-        setAllowance(ethers.utils.formatEther(allowance));
+        const { decimals } = first;
+        setAllowance(ethers.utils.formatUnits(allowance,decimals));
 
         const symbol = await tokenContract.symbol();
         console.log('Token symbol: ', symbol);
         setSymbol(symbol);
 
         const mybalance = await tokenContract.balanceOf(account);
-        const balanceAfter = ethers.utils.formatEther(mybalance);
+        const balanceAfter = ethers.utils.formatUnits(mybalance,decimals);
         console.log("My balance: ", balanceAfter);
         setmybalance(balanceAfter);
 
@@ -304,7 +307,7 @@ export default function Step2() {
     const sendEther = async () => {
 
         if (first == null) return;
-        const { amounts, tokenAddress } = first;
+        const { amounts, tokenAddress,decimals } = first;
         setshowLoading(true);
         settips('Waiting...');
 
@@ -342,7 +345,7 @@ export default function Step2() {
         }
 
         console.log("total amount: ", _totalAmount);
-        console.log("total amount string: ", ethers.utils.formatEther(_totalAmount));
+        console.log("total amount string: ", ethers.utils.formatUnits(_totalAmount,decimals));
 
         const multiSender = new ethers.Contract(multiSenderAddress, senderAbi, web3Provider);
         await multiSender.deployed();
@@ -452,24 +455,28 @@ export default function Step2() {
         if (_allowance.lt(_totalAmount)) {
             if (selected === 'unlimited') {
                 // const totalSupply = await tokenContract.totalSupply();
+                try{
+                    let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, ethers.constants.MaxUint256);
+                    settips('Unlimited Approve in progress...');
+                    let data = await receipt.wait();
+                    console.log('txHash', data);
+                    setTxHash(data.hash);
+                }catch (err) {
+                    console.error('approve error: ', err);
+                    setshowLoading(false);
+                }
 
-                await tokenContract.connect(signer).approve(multiSenderAddress, ethers.constants.MaxUint256).then((data: { hash: string }) => {
-                    console.log('txHash', data);
-                    settips('Unlimited Approve in progress...')
-                    setTxHash(data.hash);
-                }).catch((err: any) => {
-                    console.error('approve error: ', err);
-                    setshowLoading(false);
-                });
             } else {
-                await tokenContract.connect(signer).approve(multiSenderAddress, _totalAmount).then((data: { hash: string }) => {
-                    console.log('txHash', data);
+                try{
+                    let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, _totalAmount);
                     settips('Approve in progress...');
+                    let data = await receipt.wait();
+                    console.log('txHash', data);
                     setTxHash(data.hash);
-                }).catch((err: any) => {
+                }catch (err) {
                     console.error('approve error: ', err);
                     setshowLoading(false);
-                });
+                }
             }
         } else {
             console.log('Already have enough allowance!');
@@ -485,17 +492,17 @@ export default function Step2() {
             let amountArr = _amountWeiArray.slice(index, index + pageSize);
 
             settips(`Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
-
-            await multiSender.connect(signer).batchSendERC20(tokenAddress, addressArr, amountArr).then((data: { hash: string; }) => {
+            try{
+                let rec =  await multiSender.connect(signer).batchSendERC20(tokenAddress, addressArr, amountArr)
+                let data = await rec.wait();
                 console.log('batchSendERC20', data);
                 txHashArr.push(data.hash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
                 }
-            }).catch((err: any) => {
+            }catch (e) {
                 setshowLoading(false);
-            });
-
+            }
         }
         setTxHashList(txHashArr);
     }
