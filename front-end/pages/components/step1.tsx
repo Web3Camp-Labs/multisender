@@ -45,6 +45,9 @@ export default function Step1(props:Props){
 
     const handleInput = (e:ChangeEvent) => {
         const { name, value } = e.target as HTMLInputElement;
+
+        console.log("=name===",name)
+
         switch (name) {
             case 'token':
                 settokenAddress(value)
@@ -101,7 +104,7 @@ export default function Step1(props:Props){
                     >
                         <Form.Control
                             type="text"
-                            name='token'
+                            name='decimals'
                             placeholder="Decimals"
                             value={decimals}
                             onChange={(e)=>handleInput(e)}
