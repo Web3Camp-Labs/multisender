@@ -103,7 +103,7 @@ export default function Step2() {
     const [tokenContract, setTokenContract] = useState<ethers.Contract | null>();
     const [multiSenderAddress, setMultiSenderAddress] = useState<string>('');
     const [txURL, setTxURL] = useState<string>('');
-    const [selected, setselected] = useState<string>('');
+    const [selected, setselected] = useState<string>('unlimited');
     const [showLoading, setshowLoading] = useState<boolean>(false);
     const [tips, settips] = useState<string>('');
     const [txHashList, setTxHashList] = useState<string[]>([]);
@@ -141,14 +141,15 @@ export default function Step2() {
         }
     }, [first])
 
-    const setTotal = () => {
+    const setTotal = async () => {
         if (first == null) return;
         const { amounts } = first;
 
         let lines = amounts.split('\n');
         let addressArray = [];
         let _amountWeiArray = [];
-        let totalAmount = 0;
+        let totalAmount = BigNumber.from('0');
+        let totalAmountAft
 
         for (let index = 0; index < lines.length; index++) {
             const line = lines[index]?.trim();
@@ -160,7 +161,10 @@ export default function Step2() {
 
 
             let address = values[0].trim();
-            let amountWei = ethers.utils.parseEther(values[1].trim()).toString();
+            const { decimals } = first;
+            let amountWei = ethers.utils.parseUnits(values[1].trim(),decimals);
+            console.error("====amountWei===",amountWei)
+
             let amount = parseFloat(values[1].trim());
 
             if (!ethers.utils.isAddress(address)) {
@@ -171,10 +175,14 @@ export default function Step2() {
             addressArray.push(address);
             _amountWeiArray.push(amountWei);
 
-            totalAmount += amount;
+            // totalAmount += amountWei;
+            totalAmount = totalAmount.add(BigNumber.from(amountWei));
+
+            totalAmountAft = ethers.utils.formatUnits(totalAmount,decimals);
+            console.error("====totalAmountAft===",totalAmountAft)
         }
 
-        setTotalAmount(totalAmount.toString());
+        setTotalAmount(totalAmountAft.toString());
         setAddressArray(addressArray);
         setAmountWeiArray(_amountWeiArray);
         console.log(`Total address : ${addressArray.length}, Total amount : ${totalAmount}`);
@@ -423,7 +431,8 @@ export default function Step2() {
             let values = line.split(',');
 
             let address = values[0].trim();
-            let amountWei = ethers.utils.parseEther(values[1].trim());
+            let amountWei = ethers.utils.parseUnits(values[1].trim(),decimals);
+            console.error("==amountWei===",amountWei)
 
             if (!ethers.utils.isAddress(address)) {
                 console.log('Invalid address: ', address);
@@ -573,6 +582,7 @@ export default function Step2() {
                         label="Extra amount to sent"
                         name='approveAmount'
                         onChange={handleRadio}
+                        checked={selected === "extra"}
                         value='extra'
                     />
                 </div>
@@ -583,6 +593,7 @@ export default function Step2() {
                         label="Unlimited amount"
                         name='approveAmount'
                         value='unlimited'
+                        checked={selected === "unlimited"}
                         onChange={handleRadio}
                     />
                 </div>
