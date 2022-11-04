@@ -151,12 +151,13 @@ export default function Step2() {
         let totalAmount = 0;
 
         for (let index = 0; index < lines.length; index++) {
-            const line = lines[index].trim();
+            const line = lines[index]?.trim();
             if (line.length === 0) {
                 console.log('skip empty line');
                 continue;
             }
             let values = line.split(',');
+
 
             let address = values[0].trim();
             let amountWei = ethers.utils.parseEther(values[1].trim()).toString();
