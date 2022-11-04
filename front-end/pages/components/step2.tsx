@@ -3,18 +3,13 @@ import styled from "styled-components";
 import { ChangeEvent, useEffect, useState } from "react";
 import { useWeb3 } from "../api/connect";
 import { ethers, BigNumber } from 'ethers';
-import TokenAbi from '../abi/ERC20.abi.json';
+import TokenAbi from '../abi/IERC20.json';
 
-import senderAbi from '../abi/sender.abi.json';
+import senderAbi from '../abi/MultiSender.json';
 
-import kovanConfig from '../config/kovan.json';
 import mainnetConfig from '../config/mainnet.json';
-
-import hecoConfig from '../config/heco.json';
-import hecotestConfig from '../config/hecotest.json';
-
+import polygonConfig from '../config/polygon.json';
 import bscConfig from '../config/bsc.json';
-import bsctestConfig from '../config/bsctest.json';
 
 const Box = styled.div`
   padding: 40px 0;
@@ -80,20 +75,14 @@ interface accountObj {
 
 interface contractAddressObj {
     mainnet: string
-    kovan: string
-    heco: string
-    hecotest: string
     bsc: string
-    bsctest: string
+    polygon: string
 }
 
 const contracts: contractAddressObj = {
     mainnet: mainnetConfig.sender,
-    kovan: kovanConfig.sender,
-    heco: hecoConfig.sender,
-    hecotest: hecotestConfig.sender,
     bsc: bscConfig.sender,
-    bsctest: bsctestConfig.sender,
+    polygon: polygonConfig.sender
 }
 
 
@@ -203,21 +192,24 @@ export default function Step2() {
         if (chainId === 1) {
             sender = contracts.mainnet;
             url = 'https://etherscan.io/tx/';
-        } else if (chainId === 42) {
-            sender = contracts.kovan;
-            url = 'https://kovan.etherscan.io/tx/';
-        } else if (chainId === 128) {
-            sender = contracts.heco;
-            url = 'https://hecoinfo.com/tx/';
-        } else if (chainId === 256) {
-            sender = contracts.hecotest;
-            url = 'https://testnet.hecoinfo.com/tx/';
+            // } else if (chainId === 42) {
+            //     sender = contracts.kovan;
+            //     url = 'https://kovan.etherscan.io/tx/';
+            // } else if (chainId === 128) {
+            //     sender = contracts.heco;
+            //     url = 'https://hecoinfo.com/tx/';
+            // } else if (chainId === 256) {
+            //     sender = contracts.hecotest;
+            //     url = 'https://testnet.hecoinfo.com/tx/';
+        } else if (chainId === 137) {
+            sender = contracts.polygon;
+            url = 'https://polygonscan.com/tx/';
         } else if (chainId === 56) {
             sender = contracts.bsc;
             url = 'https://bscscan.com/tx/';
-        } else if (chainId === 97) {
-            sender = contracts.bsctest;
-            url = 'https://testnet.bscscan.com/tx/';
+            // } else if (chainId === 97) {
+            //     sender = contracts.bsctest;
+            //     url = 'https://testnet.bscscan.com/tx/';
         } else {
             console.error('Unsupported network!!!!');
             return;
