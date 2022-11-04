@@ -71,6 +71,7 @@ async function execute() {
         .requiredOption('-n, --network <string>', "the networks to send tokens, ethereum, polygon, bnbchain, moonbeam, bsctest")
         .requiredOption('-c, --csv <string>', "the csv file contains all the sending data")
         .requiredOption('-t, --token <string>', "the multi send token address")
+        .option('-m, --multi-entry', "handle multi entry, sum duplicate entries", false)
         .option('-d, --dry-run', "dry-run", false);
 
     program.parse();
@@ -84,9 +85,11 @@ async function execute() {
     var pageSize = 200; // How many tx per transaction
     var startPage = 0;
     var dryrun = false;
+    var multientry = false;
     var handleError = true;
     var inputFile = '';
     var tokenAddress = '';
+    var decimals = 18;
     var senderAddress = '';
     var network;
 
@@ -104,13 +107,15 @@ async function execute() {
         console.error("unexpected network");
         exit(1);
     }
-    console.log(network);
+    // console.log(network);
     console.log(`sender address: ${senderAddress}`);
     console.log(`sender abi: ${senderAbiPath}`);
     console.log(`erc20 abi: ${erc20AbisPath}`);
 
     inputFile = opts.csv;
     tokenAddress = opts.token;
+    dryrun = opts.dryRun;
+    multientry = opts.multiEntry;
 
     // Step 1.1 Prepare Smart Contracts
 
@@ -122,14 +127,16 @@ async function execute() {
 
     const senderContract = new ethers.Contract(senderAddress, senderABI, wallet);
     await senderContract.deployed();
-    const tokenContract = new ethers.Contract(tokenAddress || '', tokenABI, wallet);
-    await tokenContract.deployed();
 
     console.log(colors.green(`========== signer address ==========`), wallet.getAddress());
     console.log(colors.green(`========== senderContract ==========`), senderContract.address);
-    console.log(colors.green(`========== tokenContract ==========`), tokenContract.address);
 
-    let decimals = await tokenContract.decimals();
+
+    // init token contract
+    const tokenContract = new ethers.Contract(tokenAddress || '', tokenABI, wallet);
+    await tokenContract.deployed();
+    decimals = await tokenContract.decimals();
+    console.log(colors.green(`========== tokenContract ==========`), tokenContract.address);
     console.log(colors.green(`========== token decimals =========`), decimals);
 
     // Step 1.2 Check csv columns
@@ -153,7 +160,9 @@ async function execute() {
             console.log(colors.red(`Invalid address : ${element.address}`));
         } else if (element.address in addressMap) {
             console.log(colors.yellow(`Duplicate address : ${element.address}`));
-            // addressMap[element.address].amount += element.amount;
+            if(multientry) {
+                console.log(colors.green(`Sum duplicate entries for one address`));
+            }
         } else {
             addressMap.set(element.address, {
                 amount: element.amount
@@ -209,10 +218,10 @@ async function execute() {
 
         let allowance = await tokenContract.allowance(wallet.getAddress(), senderContract.address);
         if (totalAmountBN.gt(allowance)) {
-            console.log(`Approve MaxUint256 for contract ${senderContract.address} ...`);
-            let res = await tokenContract.approve(senderContract.address, totalAmountBN);
+            console.log(`Approve for contract ${senderContract.address} ...`);
+            // let res = await tokenContract.approve(senderContract.address, totalAmountBN);
             // let res = await tokenContract.approve(senderContract.address, totalAmountBN, { gasPrice: 100_000_000_000 });
-            // let res = await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256, { gasPrice: 100_000_000_000, gasLimit: 2e7 });
+            let res = await tokenContract.approve(senderContract.address, ethers.constants.MaxUint256, { gasPrice: 1_500_000_000_000, gasLimit: 2e7 });
             console.log(`tx: `, res);
             await res.wait();
         }
@@ -232,8 +241,8 @@ async function execute() {
             // console.log('estimate gas: ', gasCost);
             // return;
 
-            let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray);
-            // let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray, { gasPrice: 100_000_000_000, gasLimit: 2e7 });
+            // let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray);
+            let res = await senderContract.batchSendERC20(tokenContract.address, addressArray, amountArray, { gasPrice: 1_500_000_000_000, gasLimit: 2e7 });
 
             console.log(`tx:`, res);
             await res.wait();
