@@ -10,6 +10,12 @@ const reducer = (state:State, action:Action) => {
         case ActionType.STORE_FIRST:
             return { ...state, first: action.payload };
 
+        case ActionType.STORE_TXHASH:
+            return { ...state, txHash: action.payload };
+
+        case ActionType.STORE_TXHASHLIST:
+            return { ...state, txHashList: action.payload };
+
         case ActionType.CONNECT:
             return { ...state, web3Provider: action.payload };
 

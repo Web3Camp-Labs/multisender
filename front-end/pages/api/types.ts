@@ -10,6 +10,8 @@ export type State = {
     account: string | null
     first:firstObj | null
     web3Provider: any
+    txHash: any
+    txHashList: any
 }
 
 export type Action = {
@@ -26,5 +28,7 @@ export interface ContextType {
 export const enum ActionType {
     SET_ACCOUNT = 'SET_ACCOUNT',
     STORE_FIRST = 'STORE_FIRST',
-    CONNECT = 'CONNECT'
+    CONNECT = 'CONNECT',
+    STORE_TXHASH = 'STORE_TXHASH',
+    STORE_TXHASHLIST = 'STORE_TXHASHLIST'
 }

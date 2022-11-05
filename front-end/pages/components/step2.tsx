@@ -10,6 +10,7 @@ import senderAbi from '../abi/MultiSender.json';
 import mainnetConfig from '../config/mainnet.json';
 import polygonConfig from '../config/polygon.json';
 import bscConfig from '../config/bsc.json';
+import {ActionType} from "../api/types";
 
 const Box = styled.div`
   padding: 40px 0;
@@ -87,7 +88,7 @@ const contracts: contractAddressObj = {
 
 
 export default function Step2() {
-    const { state } = useWeb3();
+    const { state,dispatch } = useWeb3();
     const { account, first, web3Provider } = state;
 
     const [totalAmount, setTotalAmount] = useState<string>('0');
@@ -302,6 +303,18 @@ export default function Step2() {
             sendERC20Token();
         }
     }
+
+    useEffect(()=>{
+        if(!txHashList.length)return;
+        dispatch({type: ActionType.STORE_TXHASHLIST,payload:txHashList});
+
+    },[txHashList]);
+
+    useEffect(()=>{
+        if(!txHash.length)return;
+        dispatch({type: ActionType.STORE_TXHASH,payload:txHash});
+
+    },[txHash]);
 
 
     const sendEther = async () => {

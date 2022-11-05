@@ -1,6 +1,7 @@
 
 import styled from "styled-components";
 import {useState} from "react";
+import {useWeb3} from "../api/connect";
 
 const Box = styled.div`
   h5{
@@ -13,8 +14,10 @@ const Box = styled.div`
 `
 
 export default function Step1(){
-    const [txHash, setTxHash] = useState(["fafdas"]);
-    const [txHashList, setTxHashList] = useState(["fafdas"]);
+    const { state } = useWeb3();
+    const { txHash, txHashList } = state;
+    // const [txHash, setTxHash] = useState([]);
+    // const [txHashList, setTxHashList] = useState([""]);
     const [txURL, setTxURL] = useState('');
 
     return <Box>
@@ -23,13 +26,13 @@ export default function Step1(){
             <h5>Approval history</h5>
             <ul className='transaction'>
                 {
-                    txHash && <li><a href={`${txURL}/${txHash}`} target="_blank" rel="noopener noreferrer">{txHash}</a></li>
+                    txHash!=null && <li><a href={`${txURL}/${txHash}`} target="_blank" rel="noopener noreferrer">{txHash}</a></li>
                 }
             </ul>
             <h5>Transactions history</h5>
             <ul className='transaction'>
                 {
-                    txHashList && txHashList.map(i => (<li key={i}><a href={`${txURL}/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
+                    txHashList && txHashList.map((i:any) => (<li key={i}><a href={`${txURL}/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
                 }
             </ul>
         </div>
