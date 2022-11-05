@@ -8,6 +8,8 @@ import Step1 from "./components/step1";
 import Step2 from "./components/step2";
 import Step3 from "./components/step3";
 import {useState} from "react";
+import Loading from "./components/loading";
+import {useWeb3} from "./api/connect";
 
 const MainBox = styled.div`
     display: flex;
@@ -67,8 +69,11 @@ const NavBox = styled.div`
     }
   }
 `
+
 const Home: NextPage = () => {
     const [ current, setCurrent ] = useState<number>(1);
+    const { state } = useWeb3();
+    const { tips } = state;
 
     const handleCurrent = (index:number) =>{
         setCurrent(index)
@@ -77,6 +82,9 @@ const Home: NextPage = () => {
     <>
       <MainContent >
           <HeaderTop />
+          {
+              tips != null &&   <Loading />
+          }
           <MainBox>
               <BgBox>
                   <Row>

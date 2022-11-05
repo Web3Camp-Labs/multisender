@@ -323,7 +323,7 @@ export default function Step2() {
         const { amounts, tokenAddress,decimals } = first;
         setshowLoading(true);
         settips('Waiting...');
-
+        dispatch({type:ActionType.TIPS,payload:"Waiting..."})
         console.log(selected);
 
 
@@ -398,6 +398,7 @@ export default function Step2() {
             let sendValue = amountWeiArr.reduce((a, b) => a.add(b));
 
             settips(`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
+            dispatch({type:ActionType.TIPS,payload:`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`})
 
             await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { from: account, value: ethers.utils.hexValue(sendValue) }).then((data: { hash: string; }) => {
                 console.log('batchSendEther', data);
@@ -417,7 +418,7 @@ export default function Step2() {
         if (first == null || tokenContract == null) return;
         setshowLoading(true);
         settips('Waiting...');
-
+        dispatch({type:ActionType.TIPS,payload:`Waiting...`})
         const { amounts, tokenAddress } = first;
 
         const multiSender = new ethers.Contract(multiSenderAddress, senderAbi, web3Provider);
@@ -471,6 +472,7 @@ export default function Step2() {
                 try{
                     let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, ethers.constants.MaxUint256);
                     settips('Unlimited Approve in progress...');
+                    dispatch({type:ActionType.TIPS,payload:`Unlimited Approve in progress...`})
                     let data = await receipt.wait();
                     console.log('txHash', data);
                     setTxHash(data.hash);
@@ -483,6 +485,7 @@ export default function Step2() {
                 try{
                     let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, _totalAmount);
                     settips('Approve in progress...');
+                    dispatch({type:ActionType.TIPS,payload:`Approve in progress...`});
                     let data = await receipt.wait();
                     console.log('txHash', data);
                     setTxHash(data.hash);
@@ -505,6 +508,8 @@ export default function Step2() {
             let amountArr = _amountWeiArray.slice(index, index + pageSize);
 
             settips(`Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
+
+            dispatch({type:ActionType.TIPS,payload:`Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`});
             try{
                 let rec =  await multiSender.connect(signer).batchSendERC20(tokenAddress, addressArr, amountArr)
                 let data = await rec.wait();

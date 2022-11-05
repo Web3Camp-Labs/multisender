@@ -4,6 +4,7 @@ const INIT_STATE:State = {
     account:null,
     first: null,
     web3Provider: null,
+    tips:null,
     txHash: null,
     txHashList: null
 
