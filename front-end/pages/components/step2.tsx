@@ -10,7 +10,7 @@ import senderAbi from '../abi/MultiSender.json';
 import mainnetConfig from '../config/mainnet.json';
 import polygonConfig from '../config/polygon.json';
 import bscConfig from '../config/bsc.json';
-import {ActionType} from "../api/types";
+import { ActionType } from "../api/types";
 import UrlJson from "../config/url.json";
 
 const Box = styled.div`
@@ -89,7 +89,7 @@ const contracts: contractAddressObj = {
 
 
 export default function Step2() {
-    const { state,dispatch } = useWeb3();
+    const { state, dispatch } = useWeb3();
     const { account, first, web3Provider } = state;
 
     const [totalAmount, setTotalAmount] = useState<string>('0');
@@ -151,7 +151,7 @@ export default function Step2() {
         let addressArray = [];
         let _amountWeiArray = [];
         let totalAmountInner = BigNumber.from('0');
-        let totalAmountAft:string = '';
+        let totalAmountAft: string = '';
 
         for (let index = 0; index < lines.length; index++) {
             const line = lines[index]?.trim();
@@ -164,8 +164,8 @@ export default function Step2() {
 
             let address = values[0].trim();
             const { decimals } = first;
-            let amountWei = ethers.utils.parseUnits(values[1].trim(),decimals);
-            console.error("====amountWei===",amountWei)
+            let amountWei = ethers.utils.parseUnits(values[1].trim(), decimals);
+            console.error("====amountWei===", amountWei)
 
             let amount = parseFloat(values[1].trim());
 
@@ -180,8 +180,8 @@ export default function Step2() {
             // totalAmount += amountWei;
             totalAmountInner = totalAmountInner.add(BigNumber.from(amountWei));
 
-            totalAmountAft = ethers.utils.formatUnits(totalAmountInner,decimals);
-            console.error("====totalAmountAft===",totalAmountAft)
+            totalAmountAft = ethers.utils.formatUnits(totalAmountInner, decimals);
+            console.error("====totalAmountAft===", totalAmountAft)
         }
 
         setTotalAmount(totalAmountAft);
@@ -200,7 +200,7 @@ export default function Step2() {
         console.log('chainId', chainId);
 
         let sender;
-        const urlArr = UrlJson.filter(item=>item.id === chainId);
+        const urlArr = UrlJson.filter(item => item.id === chainId);
         url = urlArr[0]?.url;
 
         if (chainId === 1) {
@@ -254,14 +254,14 @@ export default function Step2() {
         const allowance = await tokenContract.allowance(account, multiSenderAddress);
         console.log("My allowance: ", allowance.toString());
         const { decimals } = first;
-        setAllowance(ethers.utils.formatUnits(allowance,decimals));
+        setAllowance(ethers.utils.formatUnits(allowance, decimals));
 
         const symbol = await tokenContract.symbol();
         console.log('Token symbol: ', symbol);
         setSymbol(symbol);
 
         const mybalance = await tokenContract.balanceOf(account);
-        const balanceAfter = ethers.utils.formatUnits(mybalance,decimals);
+        const balanceAfter = ethers.utils.formatUnits(mybalance, decimals);
         console.log("My balance: ", balanceAfter);
         setmybalance(balanceAfter);
 
@@ -310,26 +310,26 @@ export default function Step2() {
         }
     }
 
-    useEffect(()=>{
-        if(!txHashList.length)return;
-        dispatch({type: ActionType.STORE_TXHASHLIST,payload:txHashList});
+    useEffect(() => {
+        if (!txHashList.length) return;
+        dispatch({ type: ActionType.STORE_TXHASHLIST, payload: txHashList });
 
-    },[txHashList]);
+    }, [txHashList]);
 
-    useEffect(()=>{
-        if(!txHash.length)return;
-        dispatch({type: ActionType.STORE_TXHASH,payload:txHash});
+    useEffect(() => {
+        if (!txHash.length) return;
+        dispatch({ type: ActionType.STORE_TXHASH, payload: txHash });
 
-    },[txHash]);
+    }, [txHash]);
 
 
     const sendEther = async () => {
 
         if (first == null) return;
-        const { amounts, tokenAddress,decimals } = first;
+        const { amounts, tokenAddress, decimals } = first;
         setshowLoading(true);
         settips('Waiting...');
-        dispatch({type:ActionType.TIPS,payload:"Waiting..."})
+        dispatch({ type: ActionType.TIPS, payload: "Waiting..." })
         console.log(selected);
 
 
@@ -364,7 +364,7 @@ export default function Step2() {
         }
 
         console.log("total amount: ", _totalAmount);
-        console.log("total amount string: ", ethers.utils.formatUnits(_totalAmount,decimals));
+        console.log("total amount string: ", ethers.utils.formatUnits(_totalAmount, decimals));
 
         const multiSender = new ethers.Contract(multiSenderAddress, senderAbi, web3Provider);
         await multiSender.deployed();
@@ -404,7 +404,7 @@ export default function Step2() {
             let sendValue = amountWeiArr.reduce((a, b) => a.add(b));
 
             settips(`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
-            dispatch({type:ActionType.TIPS,payload:`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`})
+            dispatch({ type: ActionType.TIPS, payload: `Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})` })
 
             await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { from: account, value: ethers.utils.hexValue(sendValue) }).then((data: { hash: string; }) => {
                 console.log('batchSendEther', data);
@@ -424,7 +424,7 @@ export default function Step2() {
         if (first == null || tokenContract == null) return;
         setshowLoading(true);
         settips('Waiting...');
-        dispatch({type:ActionType.TIPS,payload:`Waiting...`})
+        dispatch({ type: ActionType.TIPS, payload: `Waiting...` })
         const { amounts, tokenAddress } = first;
 
         const multiSender = new ethers.Contract(multiSenderAddress, senderAbi, web3Provider);
@@ -454,8 +454,8 @@ export default function Step2() {
             let values = line.split(',');
 
             let address = values[0].trim();
-            let amountWei = ethers.utils.parseUnits(values[1].trim(),decimals);
-            console.error("==amountWei===",amountWei)
+            let amountWei = ethers.utils.parseUnits(values[1].trim(), decimals);
+            console.error("==amountWei===", amountWei)
 
             if (!ethers.utils.isAddress(address)) {
                 console.log('Invalid address: ', address);
@@ -475,27 +475,27 @@ export default function Step2() {
         if (_allowance.lt(_totalAmount)) {
             if (selected === 'unlimited') {
                 // const totalSupply = await tokenContract.totalSupply();
-                try{
+                try {
                     let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, ethers.constants.MaxUint256);
                     settips('Unlimited Approve in progress...');
-                    dispatch({type:ActionType.TIPS,payload:`Unlimited Approve in progress...`})
+                    dispatch({ type: ActionType.TIPS, payload: `Unlimited Approve in progress...` })
                     let data = await receipt.wait();
                     console.log('txHash', data);
-                    setTxHash(data.hash);
-                }catch (err) {
+                    setTxHash(data.hash || data.transactionHash);
+                } catch (err) {
                     console.error('approve error: ', err);
                     setshowLoading(false);
                 }
 
             } else {
-                try{
+                try {
                     let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, _totalAmount);
                     settips('Approve in progress...');
-                    dispatch({type:ActionType.TIPS,payload:`Approve in progress...`});
+                    dispatch({ type: ActionType.TIPS, payload: `Approve in progress...` });
                     let data = await receipt.wait();
                     console.log('txHash', data);
-                    setTxHash(data.hash);
-                }catch (err) {
+                    setTxHash(data.hash || data.transactionHash);
+                } catch (err) {
                     console.error('approve error: ', err);
                     setshowLoading(false);
                 }
@@ -515,16 +515,16 @@ export default function Step2() {
 
             settips(`Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
 
-            dispatch({type:ActionType.TIPS,payload:`Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`});
-            try{
-                let rec =  await multiSender.connect(signer).batchSendERC20(tokenAddress, addressArr, amountArr)
+            dispatch({ type: ActionType.TIPS, payload: `Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})` });
+            try {
+                let rec = await multiSender.connect(signer).batchSendERC20(tokenAddress, addressArr, amountArr)
                 let data = await rec.wait();
                 console.log('batchSendERC20', data);
-                txHashArr.push(data.hash);
+                txHashArr.push(data.hash || data.transactionHash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
                 }
-            }catch (e) {
+            } catch (e) {
                 setshowLoading(false);
             }
         }
