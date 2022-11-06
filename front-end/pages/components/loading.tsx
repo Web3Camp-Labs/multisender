@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import Spinner from 'react-bootstrap/Spinner';
+import {useWeb3} from "../api/connect";
 
 const Box = styled.div`
     background: rgba(0,0,0,0.2);
@@ -31,12 +32,15 @@ const LoadingInner = styled.div`
 
 
 export default function Loading(){
+    const { state } = useWeb3();
+    const { tips } = state;
+
     return <Box>
         <LoadingInner>
             <div className="image">
                 <Spinner  animation="border" variant="flat" />
             </div>
-            <div>Loading</div>
+            <div>{tips}</div>
         </LoadingInner>
     </Box>
 }

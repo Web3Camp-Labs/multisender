@@ -11,6 +11,7 @@ import mainnetConfig from '../config/mainnet.json';
 import polygonConfig from '../config/polygon.json';
 import bscConfig from '../config/bsc.json';
 import {ActionType} from "../api/types";
+import UrlJson from "../config/url.json";
 
 const Box = styled.div`
   padding: 40px 0;
@@ -198,10 +199,13 @@ export default function Step2() {
         const { chainId } = await web3Provider.getNetwork();
         console.log('chainId', chainId);
 
-        let sender
+        let sender;
+        const urlArr = UrlJson.filter(item=>item.id === chainId);
+        url = urlArr[0]?.url;
+
         if (chainId === 1) {
             sender = contracts.mainnet;
-            url = 'https://etherscan.io/tx/';
+            // url = 'https://etherscan.io/tx/';
             // } else if (chainId === 42) {
             //     sender = contracts.kovan;
             //     url = 'https://kovan.etherscan.io/tx/';
@@ -213,10 +217,10 @@ export default function Step2() {
             //     url = 'https://testnet.hecoinfo.com/tx/';
         } else if (chainId === 137) {
             sender = contracts.polygon;
-            url = 'https://polygonscan.com/tx/';
+            // url = 'https://polygonscan.com/tx/';
         } else if (chainId === 56) {
             sender = contracts.bsc;
-            url = 'https://bscscan.com/tx/';
+            // url = 'https://bscscan.com/tx/';
             // } else if (chainId === 97) {
             //     sender = contracts.bsctest;
             //     url = 'https://testnet.bscscan.com/tx/';
@@ -224,6 +228,8 @@ export default function Step2() {
             console.error('Unsupported network!!!!');
             return;
         }
+
+
         setMultiSenderAddress(sender)
         setTxURL(url);
 
