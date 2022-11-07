@@ -7,6 +7,7 @@ import "hardhat-docgen";
 
 import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-solpp";
 
 
 import { config as dotEnvConfig } from "dotenv";
@@ -23,11 +24,10 @@ const config: HardhatUserConfig = {
       blockGasLimit: 0x1fffffffffffff,
       allowUnlimitedContractSize: true
     },
-    
+
     bsctest: {
-      url: "https://data-seed-prebsc-1-s2.binance.org:8545",
+      url: "https://dimensional-magical-sun.bsc-testnet.discover.quiknode.pro/8d7ff025c5d4a1aa94bfcdf8a563bf156c120ca7/",
       accounts: [process.env.TESTNET_PRIVATE_KEY || ''],
-      gasPrice: 20_000_000_000
     },
 
     // main networks
@@ -49,10 +49,11 @@ const config: HardhatUserConfig = {
       accounts: [process.env.MAINNET_PRIVATE_KEY || ''],
     },
   },
+
   solidity: {
     compilers: [
       {
-        version: "0.8.17",
+        version: "0.8.9",
         settings: {
           optimizer: { enabled: true, runs: 200 }
         }
@@ -85,6 +86,9 @@ const config: HardhatUserConfig = {
     path: './docs',
     clear: true,
     runOnCompile: false
+  },
+  solpp: {
+    noFlatten: true
   },
   mocha: {
     timeout: 100000
