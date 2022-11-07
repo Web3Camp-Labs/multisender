@@ -125,7 +125,7 @@ export default function Step1(props:Props){
                             name='decimals'
                             placeholder="Decimals"
                             value={decimals}
-
+                            readOnly={true}
                             // onChange={(e)=>handleInput(e)}
                         />
                     </FloatingLabel>
