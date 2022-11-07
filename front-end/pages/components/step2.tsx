@@ -165,7 +165,6 @@ export default function Step2() {
             let address = values[0].trim();
             const { decimals } = first;
             let amountWei = ethers.utils.parseUnits(values[1].trim(), decimals);
-            console.error("====amountWei===", amountWei)
 
             let amount = parseFloat(values[1].trim());
 
@@ -181,7 +180,6 @@ export default function Step2() {
             totalAmountInner = totalAmountInner.add(BigNumber.from(amountWei));
 
             totalAmountAft = ethers.utils.formatUnits(totalAmountInner, decimals);
-            console.error("====totalAmountAft===", totalAmountAft)
         }
 
         setTotalAmount(totalAmountAft);
@@ -275,10 +273,10 @@ export default function Step2() {
         setTokenContract(null);
         setAllowance('0');
         setSymbol("ETH");
-
+        const { decimals } = first;
         const signer = web3Provider.getSigner(account);
-        const ethBalance = await signer.getBalance()
-        let ethBalanceAfter = ethers.utils.formatEther(ethBalance);
+        const ethBalance = await signer.getBalance();
+        let ethBalanceAfter = ethers.utils.formatUnits(ethBalance,decimals);
         setmybalance(ethBalanceAfter);
         setethBalance(ethBalanceAfter);
     }
@@ -455,7 +453,6 @@ export default function Step2() {
 
             let address = values[0].trim();
             let amountWei = ethers.utils.parseUnits(values[1].trim(), decimals);
-            console.error("==amountWei===", amountWei)
 
             if (!ethers.utils.isAddress(address)) {
                 console.log('Invalid address: ', address);
