@@ -10,6 +10,7 @@ import senderAbi from '../abi/MultiSender.json';
 import mainnetConfig from '../config/mainnet.json';
 import polygonConfig from '../config/polygon.json';
 import bscConfig from '../config/bsc.json';
+import bsctestConfig from '../config/bsctest.json';
 import { ActionType } from "../api/types";
 import UrlJson from "../config/url.json";
 
@@ -79,12 +80,18 @@ interface contractAddressObj {
     mainnet: string
     bsc: string
     polygon: string
+
+    bsctest: string
 }
 
 const contracts: contractAddressObj = {
+    // Mainnet Configs
     mainnet: mainnetConfig.sender,
     bsc: bscConfig.sender,
-    polygon: polygonConfig.sender
+    polygon: polygonConfig.sender,
+
+    // Testnet Configs
+    bsctest: bsctestConfig.sender
 }
 
 
@@ -218,8 +225,8 @@ export default function Step2() {
         } else if (chainId === 56) {
             sender = contracts.bsc;
             // url = 'https://bscscan.com/tx/';
-            // } else if (chainId === 97) {
-            //     sender = contracts.bsctest;
+        } else if (chainId === 97) {
+            sender = contracts.bsctest;
             //     url = 'https://testnet.bscscan.com/tx/';
         } else {
             console.error('Unsupported network!!!!');
@@ -277,7 +284,7 @@ export default function Step2() {
         const { decimals } = first;
         const signer = web3Provider.getSigner(account);
         const ethBalance = await signer.getBalance();
-        let ethBalanceAfter = ethers.utils.formatUnits(ethBalance,decimals);
+        let ethBalanceAfter = ethers.utils.formatUnits(ethBalance, decimals);
         setmybalance(ethBalanceAfter);
         setethBalance(ethBalanceAfter);
     }
@@ -410,12 +417,12 @@ export default function Step2() {
                 txHashArr.push(data.hash || data.transactionHash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
-                    dispatch({ type: ActionType.TIPS, payload: null})
+                    dispatch({ type: ActionType.TIPS, payload: null })
                 }
             }).catch((err: any) => {
                 console.error('batchSendEther error: ', err);
                 setshowLoading(false);
-                dispatch({ type: ActionType.TIPS, payload: null})
+                dispatch({ type: ActionType.TIPS, payload: null })
             });
         }
         setTxHashList(txHashArr);
@@ -484,11 +491,11 @@ export default function Step2() {
                     let data = await receipt.wait();
                     console.log('txHash', data);
                     setTxHash(data.hash || data.transactionHash);
-                    dispatch({ type: ActionType.TIPS, payload: null})
+                    dispatch({ type: ActionType.TIPS, payload: null })
                 } catch (err) {
                     console.error('approve error: ', err);
                     setshowLoading(false);
-                    dispatch({ type: ActionType.TIPS, payload: null})
+                    dispatch({ type: ActionType.TIPS, payload: null })
                 }
 
             } else {
@@ -499,11 +506,11 @@ export default function Step2() {
                     let data = await receipt.wait();
                     console.log('txHash', data);
                     setTxHash(data.hash || data.transactionHash);
-                    dispatch({ type: ActionType.TIPS, payload: null})
+                    dispatch({ type: ActionType.TIPS, payload: null })
                 } catch (err) {
                     console.error('approve error: ', err);
                     setshowLoading(false);
-                    dispatch({ type: ActionType.TIPS, payload: null})
+                    dispatch({ type: ActionType.TIPS, payload: null })
                 }
             }
         } else {
@@ -529,11 +536,11 @@ export default function Step2() {
                 txHashArr.push(data.hash || data.transactionHash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
-                    dispatch({ type: ActionType.TIPS, payload: null})
+                    dispatch({ type: ActionType.TIPS, payload: null })
                 }
             } catch (e) {
                 setshowLoading(false);
-                dispatch({ type: ActionType.TIPS, payload: null})
+                dispatch({ type: ActionType.TIPS, payload: null })
             }
         }
         setTxHashList(txHashArr);
