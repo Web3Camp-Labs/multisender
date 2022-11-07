@@ -270,6 +270,8 @@ export default function Step2() {
     }
 
     const handleETH = async () => {
+        if (first == null) return;
+
         setTokenContract(null);
         setAllowance('0');
         setSymbol("ETH");

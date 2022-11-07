@@ -4,6 +4,8 @@ import {ChangeEvent, useState, useEffect} from "react";
 import {useWeb3} from "../api/connect";
 import Excel from "./excel";
 import {ActionType} from "../api/types";
+import {ethers} from "ethers";
+import TokenAbi from "../abi/ERC20.json";
 
 const Box = styled.div`
     .height50{
@@ -27,10 +29,10 @@ interface fileObj{
 export default function Step1(props:Props){
 
     const { dispatch,state } = useWeb3();
-    const { account } = state;
+    const { account, web3Provider } = state;
 
     const [tokenAddress, settokenAddress] = useState<string>('0x000000000000000000000000000000000000bEEF'); // 0xbEEF as Ether
-    const [decimals, setdecimals] = useState<string>('18');
+    const [decimals, setdecimals] = useState<number>(18);
     const [amounts, setamounts] = useState<string>('');
     const [btndisabled, setbtndisabled] = useState(true);
 
@@ -41,7 +43,23 @@ export default function Step1(props:Props){
         } else {
             setbtndisabled(false)
         }
-    }, [account, amounts, tokenAddress, decimals])
+    }, [account, amounts, tokenAddress, decimals]);
+
+
+    useEffect(()=>{
+        if(web3Provider == null) return;
+
+
+        const getDecimals = async() =>{
+            if(tokenAddress === "0x000000000000000000000000000000000000bEEF") return;
+            const tokenContract = new ethers.Contract(tokenAddress, TokenAbi, web3Provider);
+            console.log(tokenContract)
+            const decimals = await tokenContract?.decimals();
+            setdecimals(decimals)
+        }
+        getDecimals()
+
+    },[tokenAddress,web3Provider])
 
     const handleInput = (e:ChangeEvent) => {
         const { name, value } = e.target as HTMLInputElement;
@@ -107,7 +125,8 @@ export default function Step1(props:Props){
                             name='decimals'
                             placeholder="Decimals"
                             value={decimals}
-                            onChange={(e)=>handleInput(e)}
+
+                            // onChange={(e)=>handleInput(e)}
                         />
                     </FloatingLabel>
                 </Col>
