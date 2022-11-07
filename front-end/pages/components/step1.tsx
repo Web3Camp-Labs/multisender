@@ -70,9 +70,6 @@ export default function Step1(props:Props){
             case 'token':
                 settokenAddress(value)
                 break;
-            case 'decimals':
-                setdecimals(value)
-                break;
             case 'amounts':
                 setamounts(value)
                 break;

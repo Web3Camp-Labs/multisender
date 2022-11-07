@@ -131,7 +131,6 @@ export default function Step2() {
             decimals,
             transaction: arr
         };
-        console.log("=====", obj);
 
         setTablelist(arr);
         setTotal();
@@ -408,16 +407,19 @@ export default function Step2() {
 
             await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { from: account, value: ethers.utils.hexValue(sendValue) }).then((data: { hash: string; }) => {
                 console.log('batchSendEther', data);
-                txHashArr.push(data.hash);
+                txHashArr.push(data.hash || data.transactionHash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
+                    dispatch({ type: ActionType.TIPS, payload: null})
                 }
             }).catch((err: any) => {
                 console.error('batchSendEther error: ', err);
                 setshowLoading(false);
+                dispatch({ type: ActionType.TIPS, payload: null})
             });
         }
         setTxHashList(txHashArr);
+        console.log(txHashArr)
     }
 
     const sendERC20Token = async () => {
@@ -474,16 +476,19 @@ export default function Step2() {
         if (_allowance.lt(_totalAmount)) {
             if (selected === 'unlimited') {
                 // const totalSupply = await tokenContract.totalSupply();
+                dispatch({ type: ActionType.TIPS, payload: `Unlimited Approve in progress...` })
                 try {
                     let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, ethers.constants.MaxUint256);
                     settips('Unlimited Approve in progress...');
-                    dispatch({ type: ActionType.TIPS, payload: `Unlimited Approve in progress...` })
+
                     let data = await receipt.wait();
                     console.log('txHash', data);
                     setTxHash(data.hash || data.transactionHash);
+                    dispatch({ type: ActionType.TIPS, payload: null})
                 } catch (err) {
                     console.error('approve error: ', err);
                     setshowLoading(false);
+                    dispatch({ type: ActionType.TIPS, payload: null})
                 }
 
             } else {
@@ -494,9 +499,11 @@ export default function Step2() {
                     let data = await receipt.wait();
                     console.log('txHash', data);
                     setTxHash(data.hash || data.transactionHash);
+                    dispatch({ type: ActionType.TIPS, payload: null})
                 } catch (err) {
                     console.error('approve error: ', err);
                     setshowLoading(false);
+                    dispatch({ type: ActionType.TIPS, payload: null})
                 }
             }
         } else {
@@ -522,12 +529,15 @@ export default function Step2() {
                 txHashArr.push(data.hash || data.transactionHash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
+                    dispatch({ type: ActionType.TIPS, payload: null})
                 }
             } catch (e) {
                 setshowLoading(false);
+                dispatch({ type: ActionType.TIPS, payload: null})
             }
         }
         setTxHashList(txHashArr);
+        console.log(txHashArr)
     }
 
 

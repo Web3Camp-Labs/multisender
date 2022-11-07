@@ -46,7 +46,7 @@ export default function Step1(){
             <h5>Transactions history</h5>
             <ul className='transaction'>
                 {
-                    txHashList && txHashList.map((i:any) => (<li key={i}><a href={`${txURL}/${i.hash}`} target="_blank" rel="noopener noreferrer">{i.hash}</a></li>))
+                    txHashList && txHashList.map((i:any) => (<li key={i}><a href={`${txURL}/${i}`} target="_blank" rel="noopener noreferrer">{i}</a></li>))
                 }
             </ul>
         </div>
