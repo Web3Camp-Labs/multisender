@@ -7,9 +7,16 @@ import Accounts from '../api/Account';
 import {useWeb3} from "../api/connect";
 import styled from "styled-components";
 
+const ContainerBox = styled(Container)`
+  .logo{
+    margin-right: 20px;
+  }
+`
+
 const Box = styled.div`
   display: flex;
   justify-content: flex-end;
+
 `
 
 const AddressBox = styled.span`
@@ -97,9 +104,12 @@ export default function HeaderTop() {
 
 
     return <div className="header">
-        <Container>
+        <ContainerBox>
             <Row>
-                <Col className="headerTxt" md={4} xs={12}>Batch Sender</Col>
+                <Col className="headerTxt" md={4} xs={12}>
+                    <img src="/multisender.png" alt="" className="logo"/>
+                    {/*Multisender*/}
+                </Col>
                 <Col className="headetRht" md={8} xs={12}> <Box>
                     {
                         !!chainName.length &&<ChainBox>
@@ -119,6 +129,6 @@ export default function HeaderTop() {
                     }
                 </Box></Col>
             </Row>
-        </Container>
+        </ContainerBox>
     </div>
 }

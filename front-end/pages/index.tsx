@@ -32,7 +32,7 @@ const CardBox = styled(Card)`
 `
 
 const NavBox = styled.div`
-    height: 90px;
+    height: 120px;
     margin: 40px ;
     .bg{
       border-bottom: 1px solid #eee;
@@ -47,7 +47,8 @@ const NavBox = styled.div`
   li{
     background: #fff;
     padding: 0 40px;
-    &>div{
+    cursor: pointer;
+    .circle{
       width: 80px;
       height: 80px;
       border-radius: 80px;
@@ -58,12 +59,26 @@ const NavBox = styled.div`
       align-items: center;
       color: #cccccc;
       font-size: 16px;
-      cursor: pointer;
+ 
+    }
+    .title{
+      padding: 20px 0 40px;
+      font-size: 14px;
+      opacity: 0.8;
+      span{
+        opacity: 0.6;
+      }
     }
     &.active{
-      &>div{
+      .circle{
        background: #fff;
         box-shadow: 0 0 10px rgba(128,0,128,0.3);
+        color: purple;
+      }
+      .title{
+        padding: 20px 0 40px;
+        font-size: 14px;
+        opacity: 1;
         color: purple;
       }
     }
@@ -93,16 +108,21 @@ const Home: NextPage = () => {
                               <div className="bg">
                                   <ul className="box">
                                       <li className={current === 1 ?"active":''} onClick={()=>handleCurrent(1)}>
-                                          <div>
+                                          <div className="circle">
                                               <FileEarmarkCode />
                                           </div>
+                                          <div className="title"><span>Step1. </span>Prepare</div>
                                       </li>
                                       <li  className={current === 2 ?"active":''} onClick={()=>handleCurrent(2)}>
-                                          <div>
+                                          <div className="circle">
                                               <Check2Square />
                                           </div>
+                                          <div className="title"><span>Step2.</span> Confirm</div>
                                       </li>
-                                      <li className={current === 3 ?"active":''} onClick={()=>handleCurrent(3)}><div> <Display /></div></li>
+                                      <li className={current === 3 ?"active":''} onClick={()=>handleCurrent(3)}>
+                                          <div className="circle"> <Display /></div>
+                                          <div className="title"><span>Step3.</span> Result</div>
+                                      </li>
                                   </ul>
                               </div>
                           </NavBox>
