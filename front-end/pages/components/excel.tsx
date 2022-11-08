@@ -5,11 +5,8 @@ import styled from "styled-components";
 import {BoxArrowUp} from "react-bootstrap-icons";
 
 const Box = styled.div`
-  .upload{
-    .file-uploader{
-    }
- 
-  }
+  display: flex;
+  align-items: center;
 
   .file {
     position: relative;
@@ -30,6 +27,15 @@ const Box = styled.div`
       width: 200px;
       height: 40px;
     }
+  }
+`
+
+const Tips = styled.div`
+    margin-left: 20px;
+  opacity: 0.6;
+  a{
+    color: #000;
+    font-weight: bolder;
   }
 `
 
@@ -62,14 +68,14 @@ export default function Excel(props:Excelprops){
 
     return (
         <Box>
-            <div>
-                <Button variant="flat" className="file">
-                    <BoxArrowUp />
-                    <span>Import Addresses</span>
-                    <input type='file' accept='.xlsx, .xls, .csv' onChange={onImportExcel} />
-                </Button>
-            </div>
-
+            <Button variant="flat" className="file">
+                <BoxArrowUp />
+                <span>Import Addresses</span>
+                <input type='file' accept='.xlsx, .xls, .csv' onChange={onImportExcel} />
+            </Button>
+            <Tips>
+                Supported file formats: .xlsx, .xls, .csv, <a href="/Book1.csv" target="_blank">Example</a>
+            </Tips>
         </Box >
     );
 
