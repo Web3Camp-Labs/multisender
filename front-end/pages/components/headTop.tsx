@@ -49,9 +49,9 @@ const ChainBox = styled.div`
 
 export default function HeaderTop() {
     const {dispatch,state} = useWeb3();
-    const { web3Provider } = state;
+    const { web3Provider,account } = state;
 
-    const [account, setaccount] = useState<string>('');
+    // const [accountAddress, setaccountAddress] = useState<string>('');
     const [show, setShow] = useState<boolean>(false);
     const [chainName ,setChainName] = useState('');
 
@@ -68,7 +68,8 @@ export default function HeaderTop() {
     const connectWallet = async () => {
         await Accounts.accountList().then(data => {
             if (data.type === 'success') {
-                setaccount(data.data)
+                // setaccountAddress(data?.data);
+                sessionStorage.setItem("account", data?.data);
                 dispatch({type: ActionType.SET_ACCOUNT,payload:data?.data});
             } else {
                 setShow(true)
@@ -90,15 +91,24 @@ export default function HeaderTop() {
         const { ethereum} = window as any;
         ethereum.on('chainChanged', () => {
             window.location.reload();
+
         });
 
         ethereum.on('accountsChanged', () => {
+            sessionStorage.removeItem('account');
             window.location.reload();
+
         });
+
+        const logInfo = sessionStorage.getItem('account');
+        if(account == null){
+            dispatch({type: ActionType.SET_ACCOUNT,payload:logInfo});
+        }
     }, []);
 
     const logout = () =>{
         dispatch({type: ActionType.SET_ACCOUNT,payload:null});
+        sessionStorage.removeItem('account');
         window.location.reload();
     }
 
