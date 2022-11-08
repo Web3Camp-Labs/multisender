@@ -22,7 +22,6 @@ export default function Step1(){
     const [txURL, setTxURL] = useState('');
 
     useEffect(()=>{
-
        const  getId = async() =>{
            let url = "";
            const { chainId } = await web3Provider.getNetwork();
@@ -40,7 +39,7 @@ export default function Step1(){
             <h5>Approval history</h5>
             <ul className='transaction'>
                 {
-                    txHash!=null && <li><a href={`${txURL}/${txHash.hash}`} target="_blank" rel="noopener noreferrer">{txHash.hash}</a></li>
+                    txHash!=null && <li><a href={`${txURL}/${txHash}`} target="_blank" rel="noopener noreferrer">{txHash}</a></li>
                 }
             </ul>
             <h5>Transactions history</h5>
