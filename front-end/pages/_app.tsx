@@ -7,8 +7,8 @@ import {DAOContextProvider} from "./api/connect";
 function MyApp({ Component, pageProps }: AppProps) {
   return <>
     <Head>
-      <title>Batch Query</title>
-      <meta name="description" content="Batch Sender" />
+      <title>Multisender</title>
+      <meta name="description" content="It supports sending ERC20 tokens and ETH!" />
       <link rel="icon" href="/favicon.ico" />
     </Head>
     <DAOContextProvider>
