@@ -26,7 +26,7 @@ const connect = async (state:State, dispatch:Dispatch<Action>) => {
     }
 };
 
-const DAOContextProvider = (props:Props) => {
+const ContextProvider = (props:Props) => {
     const [state, dispatch] = useReducer(reducer, initState);
     console.log("=====state=====",state);
     const { web3Provider } = state;
@@ -41,4 +41,4 @@ const DAOContextProvider = (props:Props) => {
 };
 
 const useWeb3 = () => ({...useContext(Web3Context)});
-export {DAOContextProvider, useWeb3};
+export {ContextProvider, useWeb3};

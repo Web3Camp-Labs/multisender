@@ -2,7 +2,7 @@ import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Head from "next/head";
-import {DAOContextProvider} from "./api/connect";
+import {ContextProvider} from "./api/connect";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return <>
@@ -11,9 +11,9 @@ function MyApp({ Component, pageProps }: AppProps) {
       <meta name="description" content="It supports sending ERC20 tokens and ETH!" />
       <link rel="icon" href="/favicon.ico" />
     </Head>
-    <DAOContextProvider>
+    <ContextProvider>
       <Component {...pageProps} />
-    </DAOContextProvider>
+    </ContextProvider>
     <link rel="stylesheet" href="https://web3camp.us/globals.css"/>
   </>
 }
