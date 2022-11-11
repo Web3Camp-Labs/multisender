@@ -412,9 +412,11 @@ export default function Step2() {
             settips(`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
             dispatch({ type: ActionType.TIPS, payload: `Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})` })
 
-            await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { from: account, value: ethers.utils.hexValue(sendValue) }).then((data: { hash: string; }) => {
+            await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { from: account, value: ethers.utils.hexValue(sendValue) }).then((data: {
+                transactionHash: string; hash: string;
+            }) => {
                 console.log('batchSendEther', data);
-                txHashArr.push(data.hash || data.transactionHash);
+                txHashArr.push(data.hash || data?.transactionHash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
                     dispatch({ type: ActionType.TIPS, payload: null })
