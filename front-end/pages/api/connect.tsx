@@ -9,7 +9,7 @@ const initState = {...INIT_STATE};
 const Web3Context = createContext<ContextType>({} as any);
 
 interface Props{
-    children: ReactElement
+    children: any
 }
 
 const connect = async (state:State, dispatch:Dispatch<Action>) => {
