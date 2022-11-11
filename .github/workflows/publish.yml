@@ -22,6 +22,7 @@ jobs:
         run: |
           cd front-end
           yarn install --frozen-lockfile
+          yarn build
           yarn export
 
       - name: Deploy to gh-pages
