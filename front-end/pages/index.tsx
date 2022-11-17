@@ -47,7 +47,6 @@ const NavBox = styled.div`
   li{
     background: #fff;
     padding: 0 40px;
-    cursor: pointer;
     .circle{
       width: 80px;
       height: 80px;
@@ -113,13 +112,13 @@ const Home: NextPage = () => {
                                           </div>
                                           <div className="title"><span>Step1. </span>Prepare</div>
                                       </li>
-                                      <li  className={current === 2 ?"active":''} onClick={()=>handleCurrent(2)}>
+                                      <li  className={current === 2 ?"active":''}>
                                           <div className="circle">
                                               <Check2Square />
                                           </div>
                                           <div className="title"><span>Step2.</span> Confirm</div>
                                       </li>
-                                      <li className={current === 3 ?"active":''} onClick={()=>handleCurrent(3)}>
+                                      <li className={current === 3 ?"active":''}>
                                           <div className="circle"> <Display /></div>
                                           <div className="title"><span>Step3.</span> Result</div>
                                       </li>
