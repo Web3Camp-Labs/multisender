@@ -1,4 +1,4 @@
-import { Form, Table, Button } from 'react-bootstrap';
+import { Form, Table, Button, Alert } from 'react-bootstrap';
 import styled from "styled-components";
 import { ChangeEvent, useEffect, useState } from "react";
 import { useWeb3 } from "../api/connect";
@@ -71,6 +71,11 @@ const H5Box = styled.h5`
   display: inline-block;
   margin-bottom: 20px;
 `
+
+const TipsBox = styled.div`
+  margin-bottom: 20px;
+`
+
 interface accountObj {
     address: string
     amount: number
@@ -125,6 +130,7 @@ export default function Step2(props:Iprops) {
     const [totalTokenAmount, setTotalTokenAmount] = useState<any>();
     const [tokenAddr, setTokenAddr] = useState<any[]>([]);
     const [amountAddr, setAmountAddr] = useState<any[]>([]);
+    const [errorTips, setErrorTips] = useState<string>('')
 
     useEffect(() => {
         if (first == null) return;
@@ -260,7 +266,7 @@ export default function Step2(props:Iprops) {
         initMultiSenderAddress()
     }, [])
     useEffect(()=>{
-        if (first == null || !tokenContract|| !multiSenderAddress) return;
+        if (first == null || (!tokenContract && first.tokenAddress !== '0x000000000000000000000000000000000000bEEF')|| !multiSenderAddress) return;
         doBatchSend();
     },[first,tokenContract,multiSenderAddress])
 
@@ -290,7 +296,7 @@ export default function Step2(props:Iprops) {
 
     const handleETH = async () => {
         if (first == null) return;
-
+        dispatch({ type: ActionType.TIPS, payload: `Query balance in progress... ` })
         setTokenContract(null);
         setAllowance('0');
         setSymbol("ETH");
@@ -306,6 +312,7 @@ export default function Step2(props:Iprops) {
         if (first == null) return;
         const { tokenAddress } = first;
         const token = new ethers.Contract(tokenAddress, TokenAbi, web3Provider);
+        dispatch({ type: ActionType.TIPS, payload: `Query token contract... ` })
         // await token.deployed();
         console.log('Send ERC20 token, token address: ', tokenAddress, token);
         setTokenContract(token);
@@ -388,6 +395,7 @@ export default function Step2(props:Iprops) {
                 }
             }).catch((err: any) => {
                 console.error('batchSendEther error: ', err);
+               setErrorTips(err.data?.message || err.message)
                 setshowLoading(false);
                 dispatch({ type: ActionType.TIPS, payload: null })
             });
@@ -400,12 +408,15 @@ export default function Step2(props:Iprops) {
 
     const sendERC20Token = async () => {
         if (first == null || tokenContract == null) return;
+
+
         const signer = web3Provider.getSigner(account);
         const { amounts, tokenAddress } = first;
         const multiSender = new ethers.Contract(multiSenderAddress, senderAbi, web3Provider);
         // Step-2: Sending
         let txIndex = 0;
         let txHashArr: string[] = [];
+
 
         for (let index = 0; index < tokenAddr.length; index += pageSize) {
             txIndex++;
@@ -426,9 +437,10 @@ export default function Step2(props:Iprops) {
                     dispatch({ type: ActionType.STORE_TXHASHLIST, payload: txHashArr });
                     handleNext(3);
                 }
-            } catch (e) {
+            } catch (e:any) {
                 setshowLoading(false);
                 dispatch({ type: ActionType.TIPS, payload: null })
+                setErrorTips(e.data?.message || e.message)
             }
         }
         // setTxHashList(txHashArr);
@@ -462,12 +474,13 @@ export default function Step2(props:Iprops) {
                     dispatch({ type: ActionType.STORE_TXHASH, payload: data.hash || data.transactionHash });
                     dispatch({ type: ActionType.TIPS, payload: null });
                     setShowApprove(false);
-
-                    setAllowance(ethers.utils.formatUnits(_allowance, decimals));
-                } catch (err) {
+                    let after = await tokenContract.allowance(account, multiSenderAddress);
+                    setAllowance(ethers.utils.formatUnits(after, decimals));
+                } catch (err:any) {
                     console.error('approve error: ', err);
                     setshowLoading(false);
                     dispatch({ type: ActionType.TIPS, payload: null })
+                    setErrorTips(err.data?.message || err.message)
                 }
 
             } else {
@@ -481,9 +494,11 @@ export default function Step2(props:Iprops) {
                     dispatch({ type: ActionType.STORE_TXHASH, payload: data.hash || data.transactionHash });
                     dispatch({ type: ActionType.TIPS, payload: null })
                     setShowApprove(false);
-                    setAllowance(ethers.utils.formatUnits(_allowance, decimals));
-                } catch (err) {
+                    let after = await tokenContract.allowance(account, multiSenderAddress);
+                    setAllowance(ethers.utils.formatUnits(after, decimals));
+                } catch (err:any) {
                     console.error('approve error: ', err);
+                    setErrorTips(err.data?.message || err.message)
                     setshowLoading(false);
                     dispatch({ type: ActionType.TIPS, payload: null })
                 }
@@ -512,7 +527,6 @@ export default function Step2(props:Iprops) {
         setshowLoading(true);
         settips('Waiting...');
         dispatch({ type: ActionType.TIPS, payload: "Waiting..." })
-        console.log(selected);
 
 
         // Step-1: Check balance...
@@ -714,6 +728,12 @@ export default function Step2(props:Iprops) {
                 </Form.Group>
             </div>
         }
+        <TipsBox>
+            {
+                !!errorTips.length &&<Alert  variant='danger'>{errorTips}</Alert>
+            }
+
+        </TipsBox>
 
         {
             showApprove &&<div className="ml2">
