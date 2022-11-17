@@ -1,4 +1,4 @@
-import {Row, Col, Form,FloatingLabel,Button} from 'react-bootstrap';
+import {Row, Col, Form, FloatingLabel, Button, Alert} from 'react-bootstrap';
 import styled from "styled-components";
 import {ChangeEvent, useState, useEffect} from "react";
 import {useWeb3} from "../api/connect";
@@ -18,6 +18,12 @@ const Box = styled.div`
     }
   }
 `
+
+const TipsBox = styled.div`
+  margin-bottom: 20px;
+`
+
+
 interface Props{
     handleNext: Function
 }
@@ -36,6 +42,7 @@ export default function Step1(props:Props){
     const [decimals, setdecimals] = useState<number>(18);
     const [amounts, setamounts] = useState<string>('');
     const [btndisabled, setbtndisabled] = useState(true);
+    const [errorTips, setErrorTips] = useState<string>('');
 
     useEffect(() => {
         if (!account || account === "" || !amounts || !tokenAddress) {
@@ -50,12 +57,19 @@ export default function Step1(props:Props){
     useEffect(()=>{
         if(web3Provider == null) return;
 
-
         const getDecimals = async() =>{
             if(tokenAddress === "0x000000000000000000000000000000000000bEEF") return;
             const tokenContract = new ethers.Contract(tokenAddress, TokenAbi, web3Provider);
-            const decimals = await tokenContract?.decimals();
-            setdecimals(decimals)
+            try{
+                const decimals = await tokenContract?.decimals();
+                setdecimals(decimals);
+                setErrorTips('')
+            }catch (err:any){
+                setErrorTips(err.data?.message || err.message)
+            }
+
+
+
         }
         getDecimals()
 
@@ -64,7 +78,6 @@ export default function Step1(props:Props){
     const handleInput = (e:ChangeEvent) => {
         const { name, value } = e.target as HTMLInputElement;
 
-        console.log("=name===",name)
 
         switch (name) {
             case 'token':
@@ -150,6 +163,12 @@ export default function Step1(props:Props){
 
                 </Col>
             </Row>
+        <TipsBox>
+            {
+                !!errorTips.length &&<Alert  variant='danger'>{errorTips}</Alert>
+            }
+
+        </TipsBox>
             <div>
                 <Button
                     variant="flat"

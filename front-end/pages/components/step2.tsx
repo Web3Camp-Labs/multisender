@@ -30,6 +30,9 @@ const Box = styled.div`
   .ml2{
     margin-left: 10px;
   }
+  .flexNumber{
+    word-break: break-all;
+  }
 `
 const TableBox = styled.div`
     margin-top: 10px;
@@ -65,6 +68,7 @@ const TableBox = styled.div`
       background:rgba(0,0,0,0.01)!important;
     }
   }
+
 `
 
 const H5Box = styled.h5`
@@ -661,7 +665,7 @@ export default function Step2(props:Iprops) {
                             <div className="tips">Request approve amount</div>
                         </td>
                         <td>
-                            <div className='numbers'>{allowance} {symbol}</div>
+                            <div className='numbers flexNumber'>{allowance} {symbol}</div>
                             <div className="tips">Your current allowance</div>
                         </td>
                     </tr>
