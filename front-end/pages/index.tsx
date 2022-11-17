@@ -131,7 +131,7 @@ const Home: NextPage = () => {
                                   current === 1 && <Step1 handleNext={handleCurrent}/>
                               }
                               {
-                                  current === 2 && <Step2 />
+                                  current === 2 && <Step2 handleNext={handleCurrent} />
                               }
                               {
                                   current === 3 && <Step3 />

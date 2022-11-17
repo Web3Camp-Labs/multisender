@@ -36,12 +36,16 @@ export default function Step1(){
     return <Box>
 
         <div>
-            <h5>Approval history</h5>
-            <ul className='transaction'>
-                {
-                    txHash!=null && <li><a href={`${txURL}/${txHash}`} target="_blank" rel="noopener noreferrer">{txHash}</a></li>
-                }
-            </ul>
+            {
+                txHash!=null &&
+                    <>
+                    <h5>Approval history</h5>
+                    <ul className='transaction'>
+                        <li><a href={`${txURL}/${txHash}`} target="_blank" rel="noopener noreferrer">{txHash}</a></li>
+
+                    </ul>
+                    </>
+            }
             <h5>Transactions history</h5>
             <ul className='transaction'>
                 {

@@ -6,6 +6,7 @@ import Excel from "./excel";
 import {ActionType} from "../api/types";
 import {ethers} from "ethers";
 import TokenAbi from "../abi/ERC20.json";
+import {type} from "os";
 
 const Box = styled.div`
     .height50{
@@ -37,7 +38,7 @@ export default function Step1(props:Props){
     const [btndisabled, setbtndisabled] = useState(true);
 
     useEffect(() => {
-        if (!account || account === "" || !amounts || !tokenAddress || !decimals) {
+        if (!account || account === "" || !amounts || !tokenAddress) {
             setbtndisabled(true)
 
         } else {
@@ -53,7 +54,6 @@ export default function Step1(props:Props){
         const getDecimals = async() =>{
             if(tokenAddress === "0x000000000000000000000000000000000000bEEF") return;
             const tokenContract = new ethers.Contract(tokenAddress, TokenAbi, web3Provider);
-            console.log(tokenContract)
             const decimals = await tokenContract?.decimals();
             setdecimals(decimals)
         }
@@ -157,8 +157,6 @@ export default function Step1(props:Props){
                     disabled={btndisabled}
                 >Next</Button>
             </div>
-
-
 
     </Box>
 }
