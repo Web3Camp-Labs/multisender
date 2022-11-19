@@ -37,6 +37,7 @@ const Box = styled.div`
 const TableBox = styled.div`
     margin-top: 10px;
   height: 470px;
+  padding-bottom: 20px;
   overflow-y: auto;
   .tableStyle{
     border-top: 1px solid #eee;
@@ -638,6 +639,7 @@ export default function Step2(props:Iprops) {
                 <Table striped borderless hover className="tableStyle">
                     <thead>
                         <tr>
+                            <th></th>
                             <th>Address</th>
                             <th>Amount</th>
                         </tr>
@@ -645,6 +647,7 @@ export default function Step2(props:Iprops) {
                     <tbody>
                         {
                             tablelist.map((i, index) => (<tr key={`${i.address}_${index}`}>
+                                <td>{index}</td>
                                 <td>{i.address}</td>
                                 <td>{i.amount}</td>
                             </tr>))
