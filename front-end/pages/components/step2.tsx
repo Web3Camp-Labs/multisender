@@ -36,6 +36,8 @@ const Box = styled.div`
 `
 const TableBox = styled.div`
     margin-top: 10px;
+  height: 470px;
+  overflow-y: auto;
   .tableStyle{
     border-top: 1px solid #eee;
     color: #666666;
