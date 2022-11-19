@@ -49,6 +49,7 @@ export default function Step1(props:Props){
     const [amounts, setamounts] = useState<string>('');
     const [btndisabled, setbtndisabled] = useState(true);
     const [errorTips, setErrorTips] = useState<string>('');
+    const [support, setSupport] = useState<boolean | null>(null);
 
     useEffect(() => {
         if (!account || account === "" || !amounts || !tokenAddress) {
@@ -90,6 +91,9 @@ export default function Step1(props:Props){
 
         if (!(chainId === 1 || chainId === 137 || chainId === 56 || chainId === 97)) {
             setErrorTips('Unsupported network!!!!')
+            setSupport(false)
+        }else{
+            setSupport(true)
         }
     };
 
@@ -191,7 +195,7 @@ export default function Step1(props:Props){
                 <Button
                     variant="flat"
                     onClick={()=>nextPage()}
-                    disabled={btndisabled}
+                    disabled={!support || btndisabled}
                 >Next</Button>
             </div>
 
