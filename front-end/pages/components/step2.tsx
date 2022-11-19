@@ -137,7 +137,8 @@ export default function Step2(props:Iprops) {
     const [totalTokenAmount, setTotalTokenAmount] = useState<any>();
     const [tokenAddr, setTokenAddr] = useState<any[]>([]);
     const [amountAddr, setAmountAddr] = useState<any[]>([]);
-    const [errorTips, setErrorTips] = useState<string>('')
+    const [errorTips, setErrorTips] = useState<string>('');
+    const [successArr, setSuccessArr] = useState<string[]>([]);
 
     useEffect(() => {
         if (first == null) return;
@@ -420,7 +421,7 @@ export default function Step2(props:Iprops) {
         let txIndex = 0;
         let txHashArr: string[] = [];
 
-
+        let mySuccessArr = [...successArr];
         for (let index = 0; index < tokenAddr.length; index += pageSize) {
             txIndex++;
             let addressArr = tokenAddr.slice(index, index + pageSize);
@@ -434,21 +435,46 @@ export default function Step2(props:Iprops) {
                 let data = await rec.wait();
                 console.log('batchSendERC20', data);
                 txHashArr.push(data.hash || data.transactionHash);
+
+                mySuccessArr = mySuccessArr.concat(addressArr);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
                     dispatch({ type: ActionType.TIPS, payload: null })
                     dispatch({ type: ActionType.STORE_TXHASHLIST, payload: txHashArr });
                     handleNext(3);
+                    console.error(successArr,mySuccessArr);
+
                 }
             } catch (e:any) {
                 setshowLoading(false);
                 dispatch({ type: ActionType.TIPS, payload: null })
                 setErrorTips(e.data?.message || e.message)
+                if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
+                    console.error(successArr);
+                }
             }
         }
-        // setTxHashList(txHashArr);
-        // console.log(txHashArr)
+        setSuccessArr(mySuccessArr);
+        downLoadExcel(mySuccessArr)
 
+    }
+
+    const downLoadExcel =  (data:string[]) => {
+        let str = `Address\n`;
+        for(let i = 0 ; i < data.length ; i++ ){
+            str+=`${data[i] + '\t'},`;
+            str+='\n';
+        }
+
+        let uri = `data:text/csv;charset=utf-8,\ufeff ${str}`;
+
+        let link = document.createElement("a");
+        link.href = uri;
+
+        link.download = `success_address_${new Date().valueOf()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     const doApprove = async () =>{
