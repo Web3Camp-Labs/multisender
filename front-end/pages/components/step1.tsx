@@ -7,6 +7,11 @@ import {ActionType} from "../api/types";
 import {ethers} from "ethers";
 import TokenAbi from "../abi/ERC20.json";
 import {type} from "os";
+import UrlJson from "../config/url.json";
+import mainnetConfig from "../config/mainnet.json";
+import bscConfig from "../config/bsc.json";
+import polygonConfig from "../config/polygon.json";
+import bsctestConfig from "../config/bsctest.json";
 
 const Box = styled.div`
     .height50{
@@ -32,6 +37,7 @@ interface fileObj{
     address:string
     amount:string
 }
+
 
 export default function Step1(props:Props){
 
@@ -67,13 +73,25 @@ export default function Step1(props:Props){
             }catch (err:any){
                 setErrorTips(err.data?.message || err.message)
             }
-
-
-
         }
         getDecimals()
 
     },[tokenAddress,web3Provider])
+
+    useEffect(()=>{
+        initMultiSenderAddress()
+    },[])
+
+    const initMultiSenderAddress = async () => {
+
+        const { chainId } = await web3Provider.getNetwork();
+        console.log('chainId', chainId);
+
+
+        if (!(chainId === 1 || chainId === 137 || chainId === 56 || chainId === 97)) {
+            setErrorTips('Unsupported network!!!!')
+        }
+    };
 
     const handleInput = (e:ChangeEvent) => {
         const { name, value } = e.target as HTMLInputElement;

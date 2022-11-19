@@ -252,13 +252,9 @@ export default function Step2(props:Iprops) {
             console.error('Unsupported network!!!!');
             return;
         }
-
-
         setMultiSenderAddress(sender);
         setTxURL(url);
         console.log("sender address: ", sender);
-
-
     };
     useEffect(() => {
         if (!tokenContract || !multiSenderAddress) return;

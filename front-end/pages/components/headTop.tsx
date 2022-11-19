@@ -54,6 +54,7 @@ export default function HeaderTop() {
     // const [accountAddress, setaccountAddress] = useState<string>('');
     const [show, setShow] = useState<boolean>(false);
     const [chainName ,setChainName] = useState('');
+    const [avaliable ,setAvaliable] = useState(true);
 
 
     useEffect(()=>{
@@ -65,7 +66,23 @@ export default function HeaderTop() {
         getChain();
     },[ web3Provider])
 
+    useEffect(()=>{
+        initMultiSenderAddress()
+    },[])
+
+    const initMultiSenderAddress = async () => {
+
+        const { chainId } = await web3Provider.getNetwork();
+        console.log('chainId', chainId);
+
+
+        if (!(chainId === 1 || chainId === 137 || chainId === 56 || chainId === 97)) {
+            setAvaliable(false);
+        }
+    };
+
     const connectWallet = async () => {
+        if(!avaliable)return;
         await Accounts.accountList().then(data => {
             if (data.type === 'success') {
                 // setaccountAddress(data?.data);
@@ -128,7 +145,7 @@ export default function HeaderTop() {
                     }
 
                     {
-                        !account && <Button variant="flat" onClick={connectWallet}>connect Wallet</Button>
+                        !account && <Button variant="flat" onClick={connectWallet} disabled={!avaliable}>connect Wallet</Button>
                     }
 
                     {
