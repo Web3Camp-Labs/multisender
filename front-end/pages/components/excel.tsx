@@ -74,7 +74,7 @@ export default function Excel(props:Excelprops){
                 <input type='file' accept='.xlsx, .xls, .csv' onChange={onImportExcel} />
             </Button>
             <Tips>
-                Supported file formats: .xlsx, .xls, .csv, <a href="/Book1.csv" target="_blank">Example</a>
+                Supported file formats: .xlsx, .xls, .csv, <a href="/multisender/Book1.csv" target="_blank">Example</a>
             </Tips>
         </Box >
     );
