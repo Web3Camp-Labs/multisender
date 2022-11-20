@@ -13,6 +13,7 @@ import bscConfig from '../config/bsc.json';
 import bsctestConfig from '../config/bsctest.json';
 import { ActionType } from "../api/types";
 import UrlJson from "../config/url.json";
+import ConfigJson from "../config/config.json";
 
 const Box = styled.div`
   padding: 40px 0;
@@ -231,31 +232,39 @@ export default function Step2(props:Iprops) {
         const urlArr = UrlJson.filter(item => item.id === chainId);
         url = urlArr[0]?.url;
 
-        if (chainId === 1) {
-            sender = contracts.mainnet;
-            // url = 'https://etherscan.io/tx/';
-            // } else if (chainId === 42) {
-            //     sender = contracts.kovan;
-            //     url = 'https://kovan.etherscan.io/tx/';
-            // } else if (chainId === 128) {
-            //     sender = contracts.heco;
-            //     url = 'https://hecoinfo.com/tx/';
-            // } else if (chainId === 256) {
-            //     sender = contracts.hecotest;
-            //     url = 'https://testnet.hecoinfo.com/tx/';
-        } else if (chainId === 137) {
-            sender = contracts.polygon;
-            // url = 'https://polygonscan.com/tx/';
-        } else if (chainId === 56) {
-            sender = contracts.bsc;
-            // url = 'https://bscscan.com/tx/';
-        } else if (chainId === 97) {
-            sender = contracts.bsctest;
-            //     url = 'https://testnet.bscscan.com/tx/';
-        } else {
+        const chainArr = ConfigJson.filter(item=>item.chainId === chainId);
+        if(chainArr.length){
+            sender = chainArr[0].sender;
+        }else{
             console.error('Unsupported network!!!!');
             return;
         }
+        //
+        // if (chainId === 1) {
+        //     sender = contracts.mainnet;
+        //     // url = 'https://etherscan.io/tx/';
+        //     // } else if (chainId === 42) {
+        //     //     sender = contracts.kovan;
+        //     //     url = 'https://kovan.etherscan.io/tx/';
+        //     // } else if (chainId === 128) {
+        //     //     sender = contracts.heco;
+        //     //     url = 'https://hecoinfo.com/tx/';
+        //     // } else if (chainId === 256) {
+        //     //     sender = contracts.hecotest;
+        //     //     url = 'https://testnet.hecoinfo.com/tx/';
+        // } else if (chainId === 137) {
+        //     sender = contracts.polygon;
+        //     // url = 'https://polygonscan.com/tx/';
+        // } else if (chainId === 56) {
+        //     sender = contracts.bsc;
+        //     // url = 'https://bscscan.com/tx/';
+        // } else if (chainId === 97) {
+        //     sender = contracts.bsctest;
+        //     //     url = 'https://testnet.bscscan.com/tx/';
+        // } else {
+        //     console.error('Unsupported network!!!!');
+        //     return;
+        // }
         setMultiSenderAddress(sender);
         setTxURL(url);
         console.log("sender address: ", sender);

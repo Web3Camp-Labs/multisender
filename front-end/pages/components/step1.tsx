@@ -12,6 +12,7 @@ import mainnetConfig from "../config/mainnet.json";
 import bscConfig from "../config/bsc.json";
 import polygonConfig from "../config/polygon.json";
 import bsctestConfig from "../config/bsctest.json";
+import ConfigJson from "../config/config.json";
 
 const Box = styled.div`
     .height50{
@@ -84,17 +85,15 @@ export default function Step1(props:Props){
     },[])
 
     const initMultiSenderAddress = async () => {
-
         const { chainId } = await web3Provider.getNetwork();
-        console.log('chainId', chainId);
-
-
-        if (!(chainId === 1 || chainId === 137 || chainId === 56 || chainId === 97)) {
+        const chainArr = ConfigJson.filter(item=>item.chainId === chainId);
+        if(chainArr.length){
+            setSupport(true)
+        }else{
             setErrorTips('Unsupported network!!!!')
             setSupport(false)
-        }else{
-            setSupport(true)
         }
+
     };
 
     const handleInput = (e:ChangeEvent) => {
