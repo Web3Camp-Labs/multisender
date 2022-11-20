@@ -66,6 +66,16 @@ export default function Excel(props:Excelprops){
         fileReader.readAsBinaryString(files[0]);
     }
 
+    const exampleFunc = () => {
+        const exampleData =[
+            {address: "<地址>", amount: "<数量>"},
+            {address: "<addresss>", amount: "<amount>"},
+            {address: "0x0000000000000000000000000000000000000000", amount: "1"},
+        ]
+
+        props.getChildrenMsg(exampleData);
+    }
+
     return (
         <Box>
             <Button variant="flat" className="file">
@@ -74,7 +84,12 @@ export default function Excel(props:Excelprops){
                 <input type='file' accept='.xlsx, .xls, .csv' onChange={onImportExcel} />
             </Button>
             <Tips>
-                Supported file formats: .xlsx, .xls, .csv, <a href="/multisender/Book1.csv" target="_blank">Example</a>
+                Supported file formats: .xlsx, .xls, .csv,
+
+                <mark
+                    onClick={()=> exampleFunc()}
+                >Example</mark>
+
             </Tips>
         </Box >
     );
