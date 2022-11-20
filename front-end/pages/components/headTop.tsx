@@ -94,8 +94,10 @@ export default function HeaderTop() {
     const FormatChain = () =>{
         let arr:obj[]=[];
         ConfigJson.map((item)=>{
-           let objArr = ChainJson.filter((obj)=>obj.chainId === item.chainId);
-           arr = arr.concat(objArr);
+           let objArr:any = ChainJson.filter((obj)=>obj.chainId === item.chainId);
+           if(objArr?.length){
+               arr = arr.concat(objArr);
+           }
         });
         setChainList(arr)
     }
