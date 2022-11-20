@@ -145,7 +145,7 @@ export default function HeaderTop() {
                     }
 
                     {
-                        !account && <Button variant="flat" onClick={connectWallet} disabled={!avaliable}>connect Wallet</Button>
+                        !account && <Button variant="flat" onClick={connectWallet} disabled={!avaliable}>Connect Wallet</Button>
                     }
 
                     {
