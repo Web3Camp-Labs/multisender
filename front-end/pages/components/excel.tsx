@@ -31,12 +31,8 @@ const Box = styled.div`
 `
 
 const Tips = styled.div`
-    margin-left: 20px;
+  margin-left: 20px;
   opacity: 0.6;
-  a{
-    color: #000;
-    font-weight: bolder;
-  }
 `
 
 interface Excelprops{
@@ -67,10 +63,10 @@ export default function Excel(props:Excelprops){
     }
 
     const exampleFunc = () => {
-        const exampleData =[
-            {address: "<地址>", amount: "<数量>"},
-            {address: "<addresss>", amount: "<amount>"},
-            {address: "0x0000000000000000000000000000000000000000", amount: "1"},
+        const exampleData = [
+            { address: "<地址>", amount: "<数量>"},
+            { address: "<addresss>", amount: "<amount>"},
+            { address: "0x0000000000000000000000000000000000000000", amount: "1"},
         ]
 
         props.getChildrenMsg(exampleData);
@@ -85,12 +81,11 @@ export default function Excel(props:Excelprops){
             </Button>
             <Tips>
                 Supported file formats: .xlsx, .xls, .csv,
-
-                <mark
-                    onClick={()=> exampleFunc()}
-                >Example</mark>
-
             </Tips>
+
+            <strong
+                onClick={exampleFunc}
+                >Example</strong>
         </Box >
     );
 
