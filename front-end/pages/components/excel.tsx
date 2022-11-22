@@ -40,17 +40,47 @@ interface Excelprops{
 }
 
 export default function Excel(props:Excelprops){
-    const onImportExcel = (file:ChangeEvent) => {
-        const { files } = file.target as any;
+    const onImportExcel = (evt:ChangeEvent) => {
+        const { files } = evt.target as any;
+
+        const file = files[0];
+
+        const fileName = file.name;
+        const fileExt = fileName.substr(fileName.lastIndexOf('.') + 1, fileName.length);
+
         const fileReader = new FileReader();
+        fileReader.readAsBinaryString(files[0]);
+
         (fileReader as any).onload = (event:ChangeEvent) => {
             try {
                 const { result } = event.target as any;
                 const workbook = XLSX.read(result, { type: 'binary' });
                 let data:any[] = [];
+
                 for (const sheet in workbook.Sheets) {
                     if (workbook.Sheets.hasOwnProperty(sheet)) {
-                        data = data.concat(XLSX.utils.sheet_to_json(workbook.Sheets[sheet],{raw:false}));
+                        if (/^xls/.test(fileExt)) {
+                            data = data.concat(XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { raw: false }));
+                        }
+
+                        if (fileExt == "csv") {
+                            const csvData = XLSX.utils.sheet_to_csv(workbook.Sheets[sheet]);
+
+                            const arrs = csvData.split("\n")
+                            let jsonObj = []
+
+                            for (const item of arrs) {
+                                const vals = item.split(",");
+                                const _address = vals[0];
+                                const _amount = vals[1];
+                                const _hash = { address: _address, amount: _amount };
+                                jsonObj.push(_hash);
+                            }
+
+                            data = jsonObj;
+
+                        }
+
                     }
                 }
                 console.log('Upload file successful!')
@@ -59,7 +89,6 @@ export default function Excel(props:Excelprops){
                 console.error('Unsupported file type!');
             }
         };
-        fileReader.readAsBinaryString(files[0]);
     }
 
     const exampleFunc = () => {
