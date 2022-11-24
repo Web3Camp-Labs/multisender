@@ -115,11 +115,10 @@ export default function Step1(props:Props){
         console.log(data)
         let str = '';
 
-        for (const ele of data) {
-            let vals: Array<string | number>;
+        for (let ele of data) {
+            ele as Array<string | number>;
 
-            vals = Object.values(ele);
-            str += vals.join(",");
+            str += ele.join(",");
             str += "\n";
           }
 
