@@ -34,12 +34,6 @@ interface Props{
     handleNext: Function
 }
 
-interface fileObj{
-    address:string
-    amount:string
-}
-
-
 export default function Step1(props:Props){
 
     const { dispatch,state } = useWeb3();
@@ -99,7 +93,6 @@ export default function Step1(props:Props){
     const handleInput = (e:ChangeEvent) => {
         const { name, value } = e.target as HTMLInputElement;
 
-
         switch (name) {
             case 'token':
                 settokenAddress(value)
@@ -118,12 +111,18 @@ export default function Step1(props:Props){
         dispatch({type: ActionType.STORE_FIRST,payload:obj});
     }
 
-    const getChildrenMsg = (data:fileObj[]) => {
+    const getChildrenMsg = (data:[]) => {
         console.log(data)
         let str = '';
-        data.map(item => {
-            str += `${item.address},${item.amount} \n`;
-        })
+
+        for (const ele of data) {
+            let vals: Array<string | number>;
+
+            vals = Object.values(ele);
+            str += vals.join(",");
+            str += "\n";
+          }
+
         setamounts(str)
     }
 
