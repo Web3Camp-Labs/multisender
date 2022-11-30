@@ -45,7 +45,7 @@ export default function Excel(props:Excelprops){
 
         const file = files[0];
 
-        const fileName = file.name;
+        const fileName = file?.name;
         const fileExt = fileName.substr(fileName.lastIndexOf('.') + 1, fileName.length);
 
         const fileReader = new FileReader();
@@ -93,9 +93,9 @@ export default function Excel(props:Excelprops){
 
     const exampleFunc = () => {
         const exampleData = [
-            { address: "<地址>", amount: "<数量>"},
             { address: "<addresss>", amount: "<amount>"},
             { address: "0x0000000000000000000000000000000000000000", amount: "1"},
+            { address: "0x0000000000000000000000000000000000000001", amount: "2"},
         ]
 
         props.getChildrenMsg(exampleData);
