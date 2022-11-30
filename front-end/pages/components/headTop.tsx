@@ -161,7 +161,7 @@ export default function HeaderTop() {
         window.location.reload();
     }
 
-    const chainChange = (item:obj) =>{
+    const chainChange = async(item:obj) =>{
         const { ethereum } = window as any;
         const {name, chainId,chain,nativeCurrency:{symbol,decimals},rpc,explorers} = item;
         console.log(name, chainId,chain,symbol,decimals,rpc,explorers[0].url);
@@ -169,23 +169,31 @@ export default function HeaderTop() {
         explorers.map( ex => {
             blkArr.push(ex.url);
         })
-        ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-                chainId:`0x${chainId.toString(16)}`,
-                chainName:chain,
-                nativeCurrency: {
-                    name,
-                    symbol,
-                    decimals
-                },
-                rpcUrls:rpc,
-                blockExplorerUrls:blkArr
-            }]
-        })
-            .catch((error:any) => {
-                console.log(error)
+        if(chainId === 1){
+            await ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0x1' }],
             })
+        }else{
+            ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                    chainId:`0x${chainId.toString(16)}`,
+                    chainName:chain,
+                    nativeCurrency: {
+                        name,
+                        symbol,
+                        decimals
+                    },
+                    rpcUrls:rpc,
+                    blockExplorerUrls:blkArr
+                }]
+            })
+                .catch((error:any) => {
+                    console.log(error)
+                })
+        }
+
     }
 
 
