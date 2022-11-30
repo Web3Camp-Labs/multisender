@@ -113,7 +113,7 @@ interface Iprops{
 
 export default function Step2(props:Iprops) {
     const { state, dispatch } = useWeb3();
-    const { account, first, web3Provider } = state;
+    const { account, first, web3Provider,importRecord } = state;
     const { handleNext } = props;
 
     const [totalAmount, setTotalAmount] = useState<string>('0');
@@ -451,7 +451,6 @@ export default function Step2(props:Iprops) {
                     dispatch({ type: ActionType.TIPS, payload: null })
                     dispatch({ type: ActionType.STORE_TXHASHLIST, payload: txHashArr });
                     handleNext(3);
-                    console.error(successArr,mySuccessArr);
 
                 }
             } catch (e:any) {
@@ -469,18 +468,28 @@ export default function Step2(props:Iprops) {
     }
 
     const downLoadExcel =  (data:string[]) => {
-        let str = `Address\n`;
-        for(let i = 0 ; i < data.length ; i++ ){
-            str+=`${data[i] + '\t'},`;
-            str+='\n';
-        }
+        if (importRecord == null ) return;
+        let amountStr = `Address,amount\n`;
+        importRecord.map((item)=>{
+            const { address, amount} = item;
+            let isSuccess = false;
+            for(let i = 0 ; i < data.length ; i++ ){
+                if(address.toLowerCase() === data[i].toLowerCase()){
+                    isSuccess = true;
+                }
+            }
+            if(!isSuccess){
+                amountStr += `${address},${amount} \n`;
+            }
+        });
+        console.log(amountStr)
 
-        let uri = `data:text/csv;charset=utf-8,\ufeff ${str}`;
+        let uri = `data:text/csv;charset=utf-8,\ufeff ${amountStr}`;
 
         let link = document.createElement("a");
         link.href = uri;
 
-        link.download = `success_address_${new Date().valueOf()}.csv`;
+        link.download = `Failed_address_${new Date().valueOf()}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

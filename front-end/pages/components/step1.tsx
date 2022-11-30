@@ -120,17 +120,24 @@ export default function Step1(props:Props){
         }
     }
     const nextPage = async () => {
+
         let arr = amounts.split('\n');
+        let data:fileObj[]= [];
         let amountStr = '';
         arr.map((item)=>{
             let address = item.split(",")[0];
             let amount = item.split(",")[1];
+            data.push({
+                address,
+                amount
+            })
             let isAddress = ethers.utils.isAddress(address);
             console.log(isNaN(parseFloat(amount)))
             if(isAddress && !isNaN(parseFloat(amount))){
                 amountStr += `${address},${parseFloat(amount)} \n`;
             }
         })
+        dispatch({type: ActionType.STORE_IMPORT,payload:data});
         props.handleNext(2);
         const obj = {
              amounts:amountStr, tokenAddress, decimals
@@ -139,11 +146,14 @@ export default function Step1(props:Props){
     }
 
     const getChildrenMsg = (data:fileObj[]) => {
+
+        console.error(data)
         let str = '';
         data.map(item => {
             str += `${item.address},${item.amount} \n`;
         })
         setamounts(str)
+
     }
 
     return <Box>
