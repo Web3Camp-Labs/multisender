@@ -43,11 +43,6 @@ export default function Excel(props:Excelprops){
     const onImportExcel = (evt:ChangeEvent) => {
         const { files } = evt.target as any;
 
-        const file = files[0];
-
-        const fileName = file?.name;
-        const fileExt = fileName.substr(fileName.lastIndexOf('.') + 1, fileName.length);
-
         const fileReader = new FileReader();
         fileReader.readAsBinaryString(files[0]);
 
@@ -59,30 +54,26 @@ export default function Excel(props:Excelprops){
 
                 for (const sheet in workbook.Sheets) {
                     if (workbook.Sheets.hasOwnProperty(sheet)) {
-                        if (/^xls/.test(fileExt)) {
-                            data = data.concat(XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { raw: false }));
+
+                        const csvData = XLSX.utils.sheet_to_csv(workbook.Sheets[sheet], {
+                            blankrows: false
+                        });
+
+                        const arrs = csvData.split("\n");
+                        let objs = [];
+
+                        for (const item of arrs) {
+                            const vals = item.split(",");
+                            const _addr = vals[0];
+                            const _amount = vals[1];
+
+                            objs.push([_addr, _amount]);
                         }
 
-                        if (fileExt == "csv") {
-                            const csvData = XLSX.utils.sheet_to_csv(workbook.Sheets[sheet]);
-
-                            const arrs = csvData.split("\n")
-                            let jsonObj = []
-
-                            for (const item of arrs) {
-                                const vals = item.split(",");
-                                const _address = vals[0];
-                                const _amount = vals[1];
-                                const _hash = { address: _address, amount: _amount };
-                                jsonObj.push(_hash);
-                            }
-
-                            data = jsonObj;
-
-                        }
-
+                        data = objs;
                     }
                 }
+
                 console.log('Upload file successful!')
                 props.getChildrenMsg(data);
             } catch (e) {
@@ -91,7 +82,7 @@ export default function Excel(props:Excelprops){
         };
     }
 
-    const exampleFunc = () => {
+    const fillExampleDataFunc = () => {
         const exampleData = [
             { address: "<addresss>", amount: "<amount>"},
             { address: "0x0000000000000000000000000000000000000000", amount: "1"},
@@ -113,7 +104,7 @@ export default function Excel(props:Excelprops){
             </Tips>
 
             <strong
-                onClick={exampleFunc}
+                onClick={fillExampleDataFunc}
                 >Example</strong>
         </Box >
     );
