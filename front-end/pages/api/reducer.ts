@@ -10,6 +10,9 @@ const reducer = (state:State, action:Action) => {
         case ActionType.STORE_FIRST:
             return { ...state, first: action.payload };
 
+        case ActionType.STORE_IMPORT:
+            return { ...state, importRecord: action.payload };
+
         case ActionType.TIPS:
             return { ...state, tips: action.payload };
 

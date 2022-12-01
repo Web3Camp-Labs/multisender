@@ -4,11 +4,18 @@ interface firstObj{
     amounts:string
     tokenAddress:string
     decimals:string
+
+}
+
+interface addressObj{
+    address:string
+    amount:string
 }
 
 export type State = {
     account: string | null
     tips: string | null
+    importRecord: addressObj[] | null
     first:firstObj | null
     web3Provider: any
     txHash: any
@@ -32,5 +39,6 @@ export const enum ActionType {
     CONNECT = 'CONNECT',
     STORE_TXHASH = 'STORE_TXHASH',
     STORE_TXHASHLIST = 'STORE_TXHASHLIST',
-    TIPS = 'TIPS'
+    TIPS = 'TIPS',
+    STORE_IMPORT = 'STORE_IMPORT'
 }

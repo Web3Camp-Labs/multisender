@@ -84,10 +84,9 @@ export default function Excel(props:Excelprops){
 
     const fillExampleDataFunc = () => {
         const exampleData = [
-            ["<地址>", "<数量>"],
-            ["<addresss>", "<amount>"],
-            ["0x0000000000000000000000000000000000000000", "1"],
-            ["T9yD14Nj9j7xAB4dbGeiX9h8unkKLxmGkn", "3"],
+            { address: "<addresss>", amount: "<amount>"},
+            { address: "0x0000000000000000000000000000000000000000", amount: "1"},
+            { address: "0x0000000000000000000000000000000000000001", amount: "2"},
         ]
 
         props.getChildrenMsg(exampleData);

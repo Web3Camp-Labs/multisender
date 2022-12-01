@@ -6,12 +6,12 @@ import Excel from "./excel";
 import {ActionType} from "../api/types";
 import {ethers} from "ethers";
 import TokenAbi from "../abi/ERC20.json";
-import {type} from "os";
-import UrlJson from "../config/url.json";
-import mainnetConfig from "../config/mainnet.json";
-import bscConfig from "../config/bsc.json";
-import polygonConfig from "../config/polygon.json";
-import bsctestConfig from "../config/bsctest.json";
+// import {type} from "os";
+// import UrlJson from "../config/url.json";
+// import mainnetConfig from "../config/mainnet.json";
+// import bscConfig from "../config/bsc.json";
+// import polygonConfig from "../config/polygon.json";
+// import bsctestConfig from "../config/bsctest.json";
 import ConfigJson from "../config/config.json";
 
 const Box = styled.div`
@@ -22,6 +22,15 @@ const Box = styled.div`
     svg{
       margin-right: 10px;
     }
+  }
+  label[for="Addresses"]{
+    background: #fff;
+    height: 33px;
+    width: 99%;
+    line-height: 4px;
+    margin: 7.5px 0 0 1px;
+    opacity: 1!important;
+    color: #aaa;
   }
 `
 
@@ -104,15 +113,33 @@ export default function Step1(props:Props){
         }
     }
     const nextPage = async () => {
-        props.handleNext(2)
+
+        let arr = amounts.split('\n');
+        let data:fileObj[]= [];
+        let amountStr = '';
+        arr.map((item)=>{
+            let address = item.split(",")[0];
+            let amount = item.split(",")[1];
+            data.push({
+                address,
+                amount
+            })
+            let isAddress = ethers.utils.isAddress(address);
+            console.log(isNaN(parseFloat(amount)))
+            if(isAddress && !isNaN(parseFloat(amount))){
+                amountStr += `${address},${parseFloat(amount)} \n`;
+            }
+        })
+        dispatch({type: ActionType.STORE_IMPORT,payload:data});
+        props.handleNext(2);
         const obj = {
-             amounts, tokenAddress, decimals
+             amounts:amountStr, tokenAddress, decimals
         }
         dispatch({type: ActionType.STORE_FIRST,payload:obj});
     }
 
-    const getChildrenMsg = (data:[]) => {
-        console.log(data)
+    const getChildrenMsg = (data:fileObj[]) => {
+
         let str = '';
 
         for (let ele of data) {
@@ -123,6 +150,7 @@ export default function Step1(props:Props){
           }
 
         setamounts(str)
+
     }
 
     return <Box>
@@ -168,7 +196,7 @@ export default function Step1(props:Props){
                     <FloatingLabel
                         controlId="Addresses"
                         label="Addresses with Amounts"
-                        className="mb-3"
+                        className="mb-3 addressLabel"
                     >
                         <Form.Control
                             placeholder="Addresses with Amounts"

@@ -5,6 +5,7 @@ const INIT_STATE:State = {
     first: null,
     web3Provider: null,
     tips:null,
+    importRecord:null,
     txHash: null,
     txHashList: null
 
