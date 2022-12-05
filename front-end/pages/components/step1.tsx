@@ -142,8 +142,11 @@ export default function Step1(props:Props){
     const getChildrenMsg = (data:any[]) => {
         let str = '';
         for (let ele of data) {
-            // ele as Array<string | number>;
-            str += ele.join(",");
+            let eleStr =[];
+            for(let key in ele){
+               eleStr.push(ele[key]);
+            }
+            str += eleStr.join(",");
             str += "\n";
           }
 
