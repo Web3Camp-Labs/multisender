@@ -43,6 +43,7 @@ interface Props{
     handleNext: Function
 }
 
+
 export default function Step1(props:Props){
 
     const { dispatch,state } = useWeb3();
@@ -115,7 +116,7 @@ export default function Step1(props:Props){
     const nextPage = async () => {
 
         let arr = amounts.split('\n');
-        let data:fileObj[]= [];
+        let data:any[]= [];
         let amountStr = '';
         arr.map((item)=>{
             let address = item.split(",")[0];
@@ -138,13 +139,10 @@ export default function Step1(props:Props){
         dispatch({type: ActionType.STORE_FIRST,payload:obj});
     }
 
-    const getChildrenMsg = (data:fileObj[]) => {
-
+    const getChildrenMsg = (data:any[]) => {
         let str = '';
-
         for (let ele of data) {
-            ele as Array<string | number>;
-
+            // ele as Array<string | number>;
             str += ele.join(",");
             str += "\n";
           }
