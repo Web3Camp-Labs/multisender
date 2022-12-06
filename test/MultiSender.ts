@@ -88,7 +88,58 @@ describe("MultiSender", function () {
     console.log(`curBalance: ${ethers.utils.formatEther(curBalance)}`);
   });
 
+
+  it("Multi send fixed amount of native token", async function () {
+
+    let balances: BigNumber[] = [];
+
+    let fixedAmount = ethers.utils.parseEther('99');
+
+    let receivers = [
+      accounts[1].address
+      , accounts[2].address
+      , accounts[3].address
+      , accounts[4].address
+      , accounts[5].address
+      , accounts[6].address
+      , accounts[7].address
+      , accounts[8].address
+      , accounts[9].address
+    ]
+
+    for await (const iterator of receivers) {
+      balances.push(await (await ethers.getSigner(iterator)).getBalance());
+    }
+
+    let totalAmount = ethers.BigNumber.from('0');
+    totalAmount = ethers.BigNumber.from(receivers.length).mul(fixedAmount);
+
+    console.log('totalAmount: ', totalAmount.toString());
+
+    let tx = await sender.batchSendFixedEther(receivers, fixedAmount, { value: totalAmount.add(ethers.utils.parseEther('9')) });
+    await tx.wait();
+
+    expect((await (await ethers.getSigner(receivers[0])).getBalance()).sub(balances[0])).to.equal(fixedAmount);
+    expect((await (await ethers.getSigner(receivers[1])).getBalance()).sub(balances[1])).to.equal(fixedAmount);
+    expect((await (await ethers.getSigner(receivers[2])).getBalance()).sub(balances[2])).to.equal(fixedAmount);
+    expect((await (await ethers.getSigner(receivers[3])).getBalance()).sub(balances[3])).to.equal(fixedAmount);
+    expect((await (await ethers.getSigner(receivers[4])).getBalance()).sub(balances[4])).to.equal(fixedAmount);
+    expect((await (await ethers.getSigner(receivers[5])).getBalance()).sub(balances[5])).to.equal(fixedAmount);
+    expect((await (await ethers.getSigner(receivers[6])).getBalance()).sub(balances[6])).to.equal(fixedAmount);
+    expect((await (await ethers.getSigner(receivers[7])).getBalance()).sub(balances[7])).to.equal(fixedAmount);
+    expect((await (await ethers.getSigner(receivers[8])).getBalance()).sub(balances[8])).to.equal(fixedAmount);
+
+    let preBalance = await ethers.provider.getBalance(sender.address);
+    console.log(`preBalance: ${ethers.utils.formatEther(preBalance)}`);
+    tx = await sender.claimBalance('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
+    await tx.wait();
+
+    let curBalance = await ethers.provider.getBalance(sender.address);
+    console.log(`curBalance: ${ethers.utils.formatEther(curBalance)}`);
+  });
+
   it("Multi send ERC20 token", async function () {
+    let balances: BigNumber[] = [];
     let decimals = await token.decimals();
 
     let amounts = [
@@ -114,6 +165,10 @@ describe("MultiSender", function () {
       , accounts[9].address
     ]
 
+    for await (const iterator of receivers) {
+      balances.push(await (await token.balanceOf(iterator)));
+    }
+
     let totalAmount = ethers.BigNumber.from('0');
 
     for (const elem of amounts) {
@@ -128,15 +183,60 @@ describe("MultiSender", function () {
     tx = await sender.batchSendERC20(token.address, receivers, amounts);
     await tx.wait();
 
-    expect(await token.balanceOf(receivers[0])).to.equal(amounts[0]);
-    expect(await token.balanceOf(receivers[1])).to.equal(amounts[1]);
-    expect(await token.balanceOf(receivers[2])).to.equal(amounts[2]);
-    expect(await token.balanceOf(receivers[3])).to.equal(amounts[3]);
-    expect(await token.balanceOf(receivers[4])).to.equal(amounts[4]);
-    expect(await token.balanceOf(receivers[5])).to.equal(amounts[5]);
-    expect(await token.balanceOf(receivers[6])).to.equal(amounts[6]);
-    expect(await token.balanceOf(receivers[7])).to.equal(amounts[7]);
-    expect(await token.balanceOf(receivers[8])).to.equal(amounts[8]);
+    expect((await token.balanceOf(receivers[0])).sub(balances[0])).to.equal(amounts[0]);
+    expect((await token.balanceOf(receivers[1])).sub(balances[1])).to.equal(amounts[1]);
+    expect((await token.balanceOf(receivers[2])).sub(balances[2])).to.equal(amounts[2]);
+    expect((await token.balanceOf(receivers[3])).sub(balances[3])).to.equal(amounts[3]);
+    expect((await token.balanceOf(receivers[4])).sub(balances[4])).to.equal(amounts[4]);
+    expect((await token.balanceOf(receivers[5])).sub(balances[5])).to.equal(amounts[5]);
+    expect((await token.balanceOf(receivers[6])).sub(balances[6])).to.equal(amounts[6]);
+    expect((await token.balanceOf(receivers[7])).sub(balances[7])).to.equal(amounts[7]);
+    expect((await token.balanceOf(receivers[8])).sub(balances[8])).to.equal(amounts[8]);
+  });
+
+  it("Multi send fixed amount of ERC20 token", async function () {
+    let balances: BigNumber[] = [];
+    let decimals = await token.decimals();
+
+    let fixedAmount = ethers.utils.parseUnits('9999', decimals);
+
+    let receivers = [
+      accounts[1].address
+      , accounts[2].address
+      , accounts[3].address
+      , accounts[4].address
+      , accounts[5].address
+      , accounts[6].address
+      , accounts[7].address
+      , accounts[8].address
+      , accounts[9].address
+    ]
+
+    for await (const iterator of receivers) {
+      balances.push(await (await token.balanceOf(iterator)));
+    }
+
+    let totalAmount = ethers.BigNumber.from('0');
+
+    totalAmount = ethers.BigNumber.from(receivers.length).mul(fixedAmount);
+
+    console.log('totalAmount: ', totalAmount.toString());
+
+    let tx = await token.approve(sender.address, totalAmount);
+    await tx.wait();
+
+    tx = await sender.batchSendFixedERC20(token.address, receivers, fixedAmount);
+    await tx.wait();
+
+    expect((await token.balanceOf(receivers[0])).sub(balances[0])).to.equal(fixedAmount);
+    expect((await token.balanceOf(receivers[1])).sub(balances[1])).to.equal(fixedAmount);
+    expect((await token.balanceOf(receivers[2])).sub(balances[2])).to.equal(fixedAmount);
+    expect((await token.balanceOf(receivers[3])).sub(balances[3])).to.equal(fixedAmount);
+    expect((await token.balanceOf(receivers[4])).sub(balances[4])).to.equal(fixedAmount);
+    expect((await token.balanceOf(receivers[5])).sub(balances[5])).to.equal(fixedAmount);
+    expect((await token.balanceOf(receivers[6])).sub(balances[6])).to.equal(fixedAmount);
+    expect((await token.balanceOf(receivers[7])).sub(balances[7])).to.equal(fixedAmount);
+    expect((await token.balanceOf(receivers[8])).sub(balances[8])).to.equal(fixedAmount);
   });
 
   // });
