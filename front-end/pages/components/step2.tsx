@@ -393,11 +393,10 @@ export default function Step2(props:Iprops) {
 
             settips(`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
             dispatch({ type: ActionType.TIPS, payload: `Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})` })
-
-           await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { from: account, value: ethers.utils.hexValue(sendValue) }).then((data: {
-                transactionHash: string; hash: string;
-            }) => {
-                console.log('batchSendEther', data);
+            try{
+                let res = await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { from: account, value: ethers.utils.hexValue(sendValue) })
+                let data = await res.wait();
+                console.log('batchSendEther', res);
                 txHashArr.push(data.hash || data?.transactionHash);
                 if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
                     setshowLoading(false);
@@ -406,12 +405,13 @@ export default function Step2(props:Iprops) {
                     handleNext(3);
 
                 }
-            }).catch((err: any) => {
+            }catch (err: any){
                 console.error('batchSendEther error: ', err);
-               setErrorTips(err.data?.message || err.message)
+                setErrorTips(err.data?.message || err.message)
                 setshowLoading(false);
                 dispatch({ type: ActionType.TIPS, payload: null })
-            });
+            }
+
 
         }
         // setTxHashList(txHashArr);
@@ -468,8 +468,9 @@ export default function Step2(props:Iprops) {
     }
 
     const downLoadExcel =  (data:string[]) => {
-        if (importRecord == null ) return;
+        if (importRecord == null  || !data.length) return;
         let amountStr = `Address,amount\n`;
+        let addressStr = "";
         importRecord.map((item)=>{
             const { address, amount} = item;
             let isSuccess = false;
@@ -479,10 +480,13 @@ export default function Step2(props:Iprops) {
                 }
             }
             if(!isSuccess){
-                amountStr += `${address},${amount} \n`;
+                addressStr += `${address},${amount} \n`;
             }
         });
-        console.log(amountStr)
+        amountStr += addressStr;
+        console.log(addressStr.split("\n"))
+        if(addressStr.split("\n").length === 1) return;
+
 
         let uri = `data:text/csv;charset=utf-8,\ufeff ${amountStr}`;
 
