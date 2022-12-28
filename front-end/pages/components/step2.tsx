@@ -242,25 +242,25 @@ export default function Step2(props:Iprops) {
         //
         // if (chainId === 1) {
         //     sender = contracts.mainnet;
-        //     // url = 'https://etherscan.io/tx/';
+        //     // url = 'https://etherscan.io/tx';
         //     // } else if (chainId === 42) {
         //     //     sender = contracts.kovan;
-        //     //     url = 'https://kovan.etherscan.io/tx/';
+        //     //     url = 'https://kovan.etherscan.io/tx';
         //     // } else if (chainId === 128) {
         //     //     sender = contracts.heco;
-        //     //     url = 'https://hecoinfo.com/tx/';
+        //     //     url = 'https://hecoinfo.com/tx';
         //     // } else if (chainId === 256) {
         //     //     sender = contracts.hecotest;
-        //     //     url = 'https://testnet.hecoinfo.com/tx/';
+        //     //     url = 'https://testnet.hecoinfo.com/tx';
         // } else if (chainId === 137) {
         //     sender = contracts.polygon;
-        //     // url = 'https://polygonscan.com/tx/';
+        //     // url = 'https://polygonscan.com/tx';
         // } else if (chainId === 56) {
         //     sender = contracts.bsc;
-        //     // url = 'https://bscscan.com/tx/';
+        //     // url = 'https://bscscan.com/tx';
         // } else if (chainId === 97) {
         //     sender = contracts.bsctest;
-        //     //     url = 'https://testnet.bscscan.com/tx/';
+        //     //     url = 'https://testnet.bscscan.com/tx';
         // } else {
         //     console.error('Unsupported network!!!!');
         //     return;
