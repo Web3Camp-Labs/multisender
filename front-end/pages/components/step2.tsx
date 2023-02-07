@@ -469,7 +469,7 @@ export default function Step2(props:Iprops) {
 
     const downLoadExcel =  (data:string[]) => {
         if (importRecord == null  || !data.length) return;
-        let amountStr = `Address,amount\n`;
+        let amountStr = `Address,Amount\n`;
         let addressStr = "";
         importRecord.map((item)=>{
             const { address, amount} = item;
