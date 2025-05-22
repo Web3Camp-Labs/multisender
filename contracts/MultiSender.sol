@@ -42,6 +42,21 @@ contract MultiSender is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         return true;
     }
 
+    function batchSendFixedERC20(
+        address _token,
+        address[] memory _targets,
+        uint256 _amount
+    ) public {
+        require(_targets.length > 0, "none address provided");
+
+        IERC20Upgradeable token = IERC20Upgradeable(_token);
+        uint256 total = _amount * _targets.length;
+        for (uint256 i = 0; i < _targets.length; i++) {
+            token.safeTransferFrom(msg.sender, _targets[i], _amount);
+        }
+        emit MultisendToken(total, _token);
+    }
+
     function batchSendEther(
         address payable[] memory _targets,
         uint256[] memory _amounts
@@ -61,6 +76,23 @@ contract MultiSender is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             (bool sent, ) = _targets[i].call{value: _amounts[i]}("");
             require(sent, "transfer eth failed");
             total += _amounts[i];
+        }
+
+        emit MultisendToken(total, address(0));
+    }
+
+    function batchSendFixedEther(
+        address payable[] memory _targets,
+        uint256 _amount
+    ) public payable {
+        require(_targets.length > 0, "none address provided");
+        uint256 total = _targets.length * _amount;
+
+        require(msg.value >= total, "insufficient fund");
+
+        for (uint256 i = 0; i < _targets.length; i++) {
+            (bool sent, ) = _targets[i].call{value: _amount}("");
+            require(sent, "transfer eth failed");
         }
 
         emit MultisendToken(total, address(0));

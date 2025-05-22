@@ -45,8 +45,8 @@ const NavBox = styled.div`
       height: 80px;
     }
   li{
-    background: #fff;
-    padding: 0 40px;
+    background: #FAFBFC;
+    padding: 0 20px;
     .circle{
       width: 80px;
       height: 80px;

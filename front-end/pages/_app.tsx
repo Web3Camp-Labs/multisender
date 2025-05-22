@@ -14,7 +14,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     <ContextProvider>
       <Component {...pageProps} />
     </ContextProvider>
-    <link rel="stylesheet" href="https://web3camp.us/globals.css"/>
+    <link rel="stylesheet" href="./globals.css"/>
   </>
 }
 
