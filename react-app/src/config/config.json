@@ -1,0 +1,24 @@
+{
+  "networks": [
+    {
+      "chainId": 1,
+      "name": "Ethereum Mainnet",
+      "multiSenderAddress": "0xdEF2f273859Ae503dD3De855Eb5Bc7b2D642d59A"
+    },
+    {
+      "chainId": 56,
+      "name": "Binance Smart Chain",
+      "multiSenderAddress": "0x525E3137b1c19473aab0383042782b3031cfC747"
+    },
+    {
+      "chainId": 97,
+      "name": "BSC Testnet",
+      "multiSenderAddress": "0xc5c13B7eA0eB0D9ceC345C16349a2b114517b66b"
+    },
+    {
+      "chainId": 137,
+      "name": "Polygon Mainnet",
+      "multiSenderAddress": "0xa6A8249A25287091bC3825f737EdEE9b76d262ed"
+    }
+  ]
+}
