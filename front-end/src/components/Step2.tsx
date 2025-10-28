@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState, useCallback } from 'react';
 import { Form, Table, Button, Alert } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useWeb3 } from '../context/Web3Context';
@@ -101,20 +101,14 @@ interface Props {
   handlePrev: () => void;
 }
 
-console.log('Step2 mounted');
 const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
   const { state, dispatch } = useWeb3();
   const { account, first, web3Provider, importRecord } = state;
-  // Debug logs for diagnosis
-  console.log('[Step2] state:', state);
-  console.log('[Step2] first:', first);
-  // Debug: log context
-  const debug = (msg: string, val: any) => { try { console.log(msg, val); } catch {} };
 
   // UI and transaction state
   const [totalAmount, setTotalAmount] = useState<string>('0');
   const [allowance, setAllowance] = useState<string>('0');
-  const [amountWeiArray, setAmountWeiArray] = useState<any[]>([]);
+  const [amountWeiArray, setAmountWeiArray] = useState<BigNumber[]>([]);
   const [mybalance, setMyBalance] = useState<string>('0');
   const [ethBalance, setEthBalance] = useState<string>('0');
   const [tableList, setTableList] = useState<AccountObj[]>([]);
@@ -130,31 +124,29 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
   const [txHashList, setTxHashList] = useState<string[]>([]);
   const [txHash, setTxHash] = useState<string>('');
   const [showApprove, setShowApprove] = useState<boolean>(false);
-  const [totalTokenAmount, setTotalTokenAmount] = useState<any>();
-  const [tokenAddr, setTokenAddr] = useState<any[]>([]);
-  const [amountAddr, setAmountAddr] = useState<any[]>([]);
+  const [totalTokenAmount, setTotalTokenAmount] = useState<BigNumber>(BigNumber.from(0));
+  const [tokenAddr, setTokenAddr] = useState<string[]>([]);
+  const [amountAddr, setAmountAddr] = useState<BigNumber[]>([]);
   const [errorTips, setErrorTips] = useState<string>('');
   const [successArr, setSuccessArr] = useState<string[]>([]);
   // Gas estimation state
   const [estimatedGas, setEstimatedGas] = useState<string>('');
   const [estimatedFee, setEstimatedFee] = useState<string>('');
 
-  // Debug: log context 'first' on mount and when it changes
+  // Validate received data from Step1
   useEffect(() => {
-    debug('Step2 received first:', first);
     if (!first || !first.amounts) {
       setErrorTips('No valid data received from Step1. Please check your input.');
       return;
     }
     const lines = first.amounts.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
-    debug('Step2 parsed lines:', lines);
     if (lines.length === 0) {
       setErrorTips('No valid address/amount lines found. Please check your input in Step1.');
     }
   }, [first]);
 
   // Utility: Estimate gas and fee for the next transaction
-  const estimateGasAndFee = async () => {
+  const estimateGasAndFee = useCallback(async () => {
     if (!web3Provider || !account || !multiSenderAddress || !first) return;
     try {
       setEstimatedGas('');
@@ -175,7 +167,7 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
         // Estimate gas for ERC20 multisend
         const multiSender = new ethers.Contract(multiSenderAddress, SenderAbi, signer);
         if (tokenAddr.length && amountAddr.length) {
-          gas = await multiSender.estimateGas.sendToken(tokenContract.address, tokenAddr, amountAddr);
+          gas = await multiSender.estimateGas.batchSendERC20(tokenContract.address, tokenAddr, amountAddr);
         }
       }
       if (gas) {
@@ -191,13 +183,12 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
       // Don't block UI on estimation error, but log it
       console.error('Error estimating gas:', error);
     }
-  };
+  }, [web3Provider, account, multiSenderAddress, first, tokenAddr, amountAddr, totalTokenAmount, tokenContract]);
 
   // Run estimation when relevant data changes
   useEffect(() => {
     estimateGasAndFee();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tokenAddr, amountAddr, tokenContract, totalTokenAmount]);
+  }, [estimateGasAndFee]);
 
   useEffect(() => {
     if (first == null) return;
@@ -233,15 +224,7 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
     if (first == null) return;
     let { amounts, decimals } = first;
 
-    // Robust: parse decimals as number if string
-    let parsedDecimals: number;
-    if (typeof decimals === 'string') {
-      parsedDecimals = parseInt(decimals, 10);
-    } else {
-      parsedDecimals = decimals;
-    }
-    console.log('[Step2.setTotal] decimals:', decimals, 'typeof:', typeof decimals, 'parsed:', parsedDecimals);
-    if (isNaN(parsedDecimals) || parsedDecimals < 0) {
+    if (isNaN(decimals) || decimals < 0) {
       setErrorTips('Invalid decimals value received from Step1.');
       return;
     }
@@ -267,21 +250,20 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
         continue;
       }
       try {
-        amountWei = ethers.utils.parseUnits(amountStr, parsedDecimals);
+        amountWei = ethers.utils.parseUnits(amountStr, decimals);
       } catch (error) {
-        console.error('Error parsing amount:', error, 'amount:', amountStr, 'decimals:', parsedDecimals);
-        setErrorTips(`Error parsing amount '${amountStr}' with decimals ${parsedDecimals} on line ${index+1}`);
+        console.error('Error parsing amount:', error, 'amount:', amountStr, 'decimals:', decimals);
+        setErrorTips(`Error parsing amount '${amountStr}' with decimals ${decimals} on line ${index+1}`);
         continue;
       }
       if (!ethers.utils.isAddress(address)) {
         setErrorTips(`Invalid address: '${address}' on line ${index+1}`);
-        console.log('Invalid address: ', address);
         continue;
       }
       addressArray.push(address);
       _amountWeiArray.push(amountWei);
       totalAmountInner = totalAmountInner.add(BigNumber.from(amountWei));
-      totalAmountAft = ethers.utils.formatUnits(totalAmountInner, parsedDecimals);
+      totalAmountAft = ethers.utils.formatUnits(totalAmountInner, decimals);
     }
     setTotalAmount(totalAmountAft);
     setAddressArray(addressArray);
@@ -412,11 +394,19 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   const sendEther = async () => {
     if (first == null || !web3Provider || !account || !multiSenderAddress) return;
-    
+
     try {
+      // Validate balance before sending
+      const totalEth = ethers.utils.formatEther(totalTokenAmount);
+      if (parseFloat(ethBalance) < parseFloat(totalEth)) {
+        setErrorTips(`Insufficient balance. You have ${ethBalance} ETH but need ${totalEth} ETH`);
+        setShowLoading(false);
+        return;
+      }
+
       const multiSender = new ethers.Contract(multiSenderAddress, SenderAbi, web3Provider);
       const signer = web3Provider.getSigner(account);
-      
+
       // Step-2: Sending Ether...
       let txIndex = 0;
       let txHashArr: string[] = [];
@@ -463,12 +453,19 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   const sendERC20Token = async () => {
     if (first == null || tokenContract == null || !web3Provider || !account || !multiSenderAddress) return;
-    
+
     try {
+      // Validate token balance before sending
+      if (parseFloat(mybalance) < parseFloat(totalAmount)) {
+        setErrorTips(`Insufficient balance. You have ${mybalance} ${symbol} but need ${totalAmount} ${symbol}`);
+        setShowLoading(false);
+        return;
+      }
+
       const signer = web3Provider.getSigner(account);
       const { tokenAddress } = first;
       const multiSender = new ethers.Contract(multiSenderAddress, SenderAbi, web3Provider);
-      
+
       // Step-2: Sending
       let txIndex = 0;
       let txHashArr: string[] = [];
@@ -600,8 +597,6 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
             dispatch({ type: ActionType.TIPS, payload: null });
           }
         }
-      } else {
-        console.log('Already have enough allowance!');
       }
     } catch (error) {
       console.error('Error in doApprove:', error);
@@ -660,7 +655,6 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
         }
 
         if (!ethers.utils.isAddress(address)) {
-          console.log('Invalid address: ', address);
           continue;
         }
 
@@ -721,7 +715,6 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
         }
 
         if (!ethers.utils.isAddress(address)) {
-          console.log('Invalid address: ', address);
           continue;
         }
 

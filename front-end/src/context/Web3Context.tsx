@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { createContext, ReactNode, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, ReactNode, useContext, useReducer, useEffect, useMemo } from 'react';
 import { ethers } from "ethers";
 import reducer from './reducer';
 import INIT_STATE from './initState';
@@ -85,9 +84,10 @@ export const Web3Provider = ({ children }: Props) => {
     }
   }, [web3Provider, state]);
 
-  console.log('[Web3Provider] state.first:', state.first);
+  const contextValue = useMemo(() => ({ state, dispatch }), [state]);
+
   return (
-    <Web3Context.Provider value={{ state, dispatch }}>
+    <Web3Context.Provider value={contextValue}>
       {children}
     </Web3Context.Provider>
   );

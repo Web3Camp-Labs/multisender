@@ -7,11 +7,7 @@ const reducer = (state: State, action: Action) => {
       return { ...state, account: action.payload };
 
     case ActionType.STORE_FIRST:
-      console.log('[Reducer] STORE_FIRST payload:', action.payload);
-      const newState = { ...state, first: action.payload };
-      console.log('[Reducer] new state:', newState);
-      console.log('[Reducer] new state after mutation:', newState);
-      return newState;
+      return { ...state, first: action.payload };
 
     case ActionType.STORE_IMPORT:
       return { ...state, importRecord: action.payload };

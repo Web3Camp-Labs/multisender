@@ -7,7 +7,7 @@ const INIT_STATE: State = {
   first: null,
   web3Provider: null,
   txHash: null,
-  txHashList: null
+  txHashList: []
 };
 
 export default INIT_STATE;

@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState, useEffect } from 'react';
+import React, { ChangeEvent, useState, useEffect, useRef } from 'react';
 import { Row, Col, Form, FloatingLabel, Button, Alert } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useWeb3 } from '../context/Web3Context';
@@ -7,12 +7,6 @@ import { ethers } from 'ethers';
 import TokenAbi from '../abi/ERC20.json';
 import ConfigJson from '../config/config.json';
 import ExcelImport from './ExcelImport';
-
-declare global {
-  interface Window {
-    __lastFirstObj?: any;
-  }
-}
 
 const Box = styled.div`
   .height50 {
@@ -44,11 +38,11 @@ interface Props {
   handleNext: (step: number) => void;
 }
 
-console.log('Step1 rendered');
 const Step1: React.FC<Props> = ({ handleNext }) => {
   const { dispatch, state } = useWeb3();
   const { account, web3Provider, first } = state;
-  console.log('[Step1] state.first:', first);
+
+  const lastFirstObjRef = useRef<{ amounts: string; tokenAddress: string; decimals: number } | null>(null);
 
   const [tokenAddress, setTokenAddress] = useState<string>('0x000000000000000000000000000000000000bEEF'); // 0xbEEF as Ether
   const [decimals, setDecimals] = useState<number>(18);
@@ -57,22 +51,18 @@ const Step1: React.FC<Props> = ({ handleNext }) => {
   const [errorTips, setErrorTips] = useState<string>('');
   const [support, setSupport] = useState<boolean | null>(null);
 
-  console.log('Step1 rendered');
-
   // Effect: navigate to Step2 when state.first matches the just-dispatched obj
-  React.useEffect(() => {
-    console.log('[Step1 useEffect] fired. first:', first, 'window.__lastFirstObj:', window.__lastFirstObj, 'dependencies:', [first, handleNext]);
-    if (!window.__lastFirstObj) return;
+  useEffect(() => {
+    if (!lastFirstObjRef.current) return;
     if (!first) return;
     // Compare all fields
     if (
-      first.amounts === window.__lastFirstObj.amounts &&
-      first.tokenAddress === window.__lastFirstObj.tokenAddress &&
-      first.decimals === window.__lastFirstObj.decimals
+      first.amounts === lastFirstObjRef.current.amounts &&
+      first.tokenAddress === lastFirstObjRef.current.tokenAddress &&
+      first.decimals === lastFirstObjRef.current.decimals
     ) {
-      console.log('Step1 useEffect: Navigating to Step2, state.first:', first);
       handleNext(2);
-      window.__lastFirstObj = undefined;
+      lastFirstObjRef.current = null;
     }
   }, [first, handleNext]);
 
@@ -167,24 +157,21 @@ const Step1: React.FC<Props> = ({ handleNext }) => {
     });
     
     if (data.length === 0) {
-  setErrorTips('Please enter at least one valid address and amount.');
-  return;
-}
+      setErrorTips('Please enter at least one valid address and amount.');
+      return;
+    }
 
-console.log('Dispatching to context:', data, amountStr, tokenAddress, decimals);
-dispatch({ type: ActionType.STORE_IMPORT, payload: data });
+    dispatch({ type: ActionType.STORE_IMPORT, payload: data });
 
-const obj = {
-  amounts: amountStr,
-  tokenAddress,
-  decimals: decimals.toString()
-};
+    const obj = {
+      amounts: amountStr,
+      tokenAddress,
+      decimals: decimals
+    };
 
-console.log('Dispatching STORE_FIRST:', obj, 'typeof obj:', typeof obj);
-dispatch({ type: ActionType.STORE_FIRST, payload: obj });
-// Navigation will happen in a useEffect below when state.first matches obj.
-// Store the latest obj in a ref for comparison.
-window.__lastFirstObj = obj;
+    dispatch({ type: ActionType.STORE_FIRST, payload: obj });
+    // Store the latest obj in a ref for comparison
+    lastFirstObjRef.current = obj;
 
 
   };

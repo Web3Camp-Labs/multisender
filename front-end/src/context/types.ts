@@ -1,9 +1,10 @@
 import { Dispatch } from "react";
+import { ethers } from "ethers";
 
 interface FirstObj {
   amounts: string;
   tokenAddress: string;
-  decimals: string;
+  decimals: number;
 }
 
 interface AddressObj {
@@ -16,9 +17,9 @@ export type State = {
   tips: string | null;
   importRecord: AddressObj[] | null;
   first: FirstObj | null;
-  web3Provider: any;
-  txHash: any;
-  txHashList: any;
+  web3Provider: ethers.providers.Web3Provider | null;
+  txHash: string | null;
+  txHashList: string[];
 }
 
 export type Action = {

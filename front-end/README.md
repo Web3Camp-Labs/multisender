@@ -37,10 +37,18 @@ yarn install
 ```bash
 npm start
 # or
-yarn start
+npm run dev
 ```
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+The build output will be in the `build/` directory.
 
 ## Usage
 
@@ -73,6 +81,7 @@ The application supports the following networks:
 This application is built with:
 - React 18
 - TypeScript
+- Vite (fast build tool)
 - ethers.js for Web3 integration
 - React Bootstrap for UI components
 - Styled Components for styling
