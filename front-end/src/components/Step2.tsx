@@ -2,7 +2,7 @@ import React, { ChangeEvent, useEffect, useState, useCallback } from 'react';
 import { Form, Table, Button, Alert } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useWeb3 } from '../context/Web3Context';
-import { ethers, BigNumber } from 'ethers';
+import { Contract, parseUnits, formatUnits, parseEther, formatEther, isAddress, toBeHex } from 'ethers';
 import TokenAbi from '../abi/ERC20.json';
 import SenderAbi from '../abi/MultiSender.json';
 import { ActionType } from '../context/types';
@@ -108,14 +108,14 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
   // UI and transaction state
   const [totalAmount, setTotalAmount] = useState<string>('0');
   const [allowance, setAllowance] = useState<string>('0');
-  const [amountWeiArray, setAmountWeiArray] = useState<BigNumber[]>([]);
+  const [amountWeiArray, setAmountWeiArray] = useState<bigint[]>([]);
   const [mybalance, setMyBalance] = useState<string>('0');
   const [ethBalance, setEthBalance] = useState<string>('0');
   const [tableList, setTableList] = useState<AccountObj[]>([]);
   const [addressArray, setAddressArray] = useState<string[]>([]);
   const [pageSize] = useState<number>(200); // Default 200 transfer per tx
   const [symbol, setSymbol] = useState<string>('');
-  const [tokenContract, setTokenContract] = useState<ethers.Contract | null>(null);
+  const [tokenContract, setTokenContract] = useState<Contract | null>(null);
   const [multiSenderAddress, setMultiSenderAddress] = useState<string>('');
   const [txURL, setTxURL] = useState<string>('');
   const [selected, setSelected] = useState<string>('unlimited');
@@ -124,9 +124,9 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
   const [txHashList, setTxHashList] = useState<string[]>([]);
   const [txHash, setTxHash] = useState<string>('');
   const [showApprove, setShowApprove] = useState<boolean>(false);
-  const [totalTokenAmount, setTotalTokenAmount] = useState<BigNumber>(BigNumber.from(0));
+  const [totalTokenAmount, setTotalTokenAmount] = useState<bigint>(0n);
   const [tokenAddr, setTokenAddr] = useState<string[]>([]);
-  const [amountAddr, setAmountAddr] = useState<BigNumber[]>([]);
+  const [amountAddr, setAmountAddr] = useState<bigint[]>([]);
   const [errorTips, setErrorTips] = useState<string>('');
   const [successArr, setSuccessArr] = useState<string[]>([]);
   // Gas estimation state
@@ -153,29 +153,31 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
       setEstimatedFee('');
       let gas = null;
       let fee = null;
-      const signer = web3Provider.getSigner(account);
+      const signer = await web3Provider.getSigner(account);
       const { tokenAddress } = first;
       if (tokenAddress === '0x000000000000000000000000000000000000bEEF') {
         // Estimate gas for ETH multisend
-        const multiSender = new ethers.Contract(multiSenderAddress, SenderAbi, signer);
+        const multiSender = new Contract(multiSenderAddress, SenderAbi, signer);
         if (tokenAddr.length && amountAddr.length) {
-          gas = await multiSender.estimateGas.batchSendEther(tokenAddr, amountAddr, {
+          gas = await multiSender.batchSendEther.estimateGas(tokenAddr, amountAddr, {
             value: totalTokenAmount,
           });
         }
       } else if (tokenContract) {
         // Estimate gas for ERC20 multisend
-        const multiSender = new ethers.Contract(multiSenderAddress, SenderAbi, signer);
+        const multiSender = new Contract(multiSenderAddress, SenderAbi, signer);
         if (tokenAddr.length && amountAddr.length) {
-          gas = await multiSender.estimateGas.batchSendERC20(tokenContract.address, tokenAddr, amountAddr);
+          const tokenAddress = await tokenContract.getAddress();
+          gas = await multiSender.batchSendERC20.estimateGas(tokenAddress, tokenAddr, amountAddr);
         }
       }
       if (gas) {
         setEstimatedGas(gas.toString());
         // Get current gas price
-        const gasPrice = await web3Provider.getGasPrice();
-        fee = gas.mul(gasPrice);
-        setEstimatedFee(ethers.utils.formatEther(fee));
+        const feeData = await web3Provider.getFeeData();
+        const gasPrice = feeData.gasPrice || 0n;
+        fee = gas * gasPrice;
+        setEstimatedFee(formatEther(fee));
       }
     } catch (error) {
       setEstimatedGas('');
@@ -232,7 +234,7 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
     let lines = amounts.split('\n');
     let addressArray = [];
     let _amountWeiArray = [];
-    let totalAmountInner = BigNumber.from('0');
+    let totalAmountInner = 0n;
     let totalAmountAft: string = '';
 
     for (let index = 0; index < lines.length; index++) {
@@ -250,20 +252,20 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
         continue;
       }
       try {
-        amountWei = ethers.utils.parseUnits(amountStr, decimals);
+        amountWei = parseUnits(amountStr, decimals);
       } catch (error) {
         console.error('Error parsing amount:', error, 'amount:', amountStr, 'decimals:', decimals);
         setErrorTips(`Error parsing amount '${amountStr}' with decimals ${decimals} on line ${index+1}`);
         continue;
       }
-      if (!ethers.utils.isAddress(address)) {
+      if (!isAddress(address)) {
         setErrorTips(`Invalid address: '${address}' on line ${index+1}`);
         continue;
       }
       addressArray.push(address);
       _amountWeiArray.push(amountWei);
-      totalAmountInner = totalAmountInner.add(BigNumber.from(amountWei));
-      totalAmountAft = ethers.utils.formatUnits(totalAmountInner, decimals);
+      totalAmountInner = totalAmountInner + amountWei;
+      totalAmountAft = formatUnits(totalAmountInner, decimals);
     }
     setTotalAmount(totalAmountAft);
     setAddressArray(addressArray);
@@ -276,12 +278,14 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
     try {
       let url = null;
       const { chainId } = await web3Provider.getNetwork();
-      
+      // Convert bigint chainId to number for comparison with JSON configs
+      const chainIdNum = Number(chainId);
+
       let sender;
-      const urlArr = UrlJson.filter(item => item.id === chainId);
+      const urlArr = UrlJson.filter(item => item.id === chainIdNum);
       url = urlArr[0]?.url;
 
-      const chainArr = ConfigJson.networks.filter(item => item.chainId === chainId);
+      const chainArr = ConfigJson.networks.filter(item => item.chainId === chainIdNum);
       if (chainArr.length) {
         sender = chainArr[0].multiSenderAddress;
       } else {
@@ -314,22 +318,22 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   const getAllowance = async () => {
     if (first == null || !tokenContract || account == null) return;
-    
+
     try {
       const allowance = await tokenContract.allowance(account, multiSenderAddress);
       const { decimals } = first;
-      setAllowance(ethers.utils.formatUnits(allowance, decimals));
+      setAllowance(formatUnits(allowance, decimals));
 
       const symbol = await tokenContract.symbol();
       setSymbol(symbol);
 
       const mybalance = await tokenContract.balanceOf(account);
-      const balanceAfter = ethers.utils.formatUnits(mybalance, decimals);
+      const balanceAfter = formatUnits(mybalance, decimals);
       setMyBalance(balanceAfter);
 
-      const signer = web3Provider.getSigner(account);
-      const ethBalance = await signer.getBalance();
-      setEthBalance(ethers.utils.formatEther(ethBalance));
+      const signer = await web3Provider!.getSigner(account);
+      const ethBalance = await signer.provider!.getBalance(account);
+      setEthBalance(formatEther(ethBalance));
     } catch (error) {
       console.error('Error getting allowance:', error);
       setErrorTips('Error getting token information');
@@ -338,17 +342,17 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   const handleETH = async () => {
     if (first == null || !web3Provider || !account) return;
-    
+
     dispatch({ type: ActionType.TIPS, payload: `Query balance in progress... ` });
     setTokenContract(null);
     setAllowance('0');
     setSymbol("ETH");
-    
+
     try {
       const { decimals } = first;
-      const signer = web3Provider.getSigner(account);
-      const ethBalance = await signer.getBalance();
-      let ethBalanceAfter = ethers.utils.formatUnits(ethBalance, decimals);
+      const signer = await web3Provider.getSigner(account);
+      const ethBalance = await signer.provider!.getBalance(account);
+      let ethBalanceAfter = formatUnits(ethBalance, decimals);
       setMyBalance(ethBalanceAfter);
       setEthBalance(ethBalanceAfter);
       dispatch({ type: ActionType.TIPS, payload: null });
@@ -361,10 +365,10 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   const handleERC20 = async () => {
     if (first == null || !web3Provider) return;
-    
+
     try {
       const { tokenAddress } = first;
-      const token = new ethers.Contract(tokenAddress, TokenAbi, web3Provider);
+      const token = new Contract(tokenAddress, TokenAbi, web3Provider);
       dispatch({ type: ActionType.TIPS, payload: `Query token contract... ` });
       setTokenContract(token);
     } catch (error) {
@@ -397,39 +401,38 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
     try {
       // Validate balance before sending
-      const totalEth = ethers.utils.formatEther(totalTokenAmount);
+      const totalEth = formatEther(totalTokenAmount);
       if (parseFloat(ethBalance) < parseFloat(totalEth)) {
         setErrorTips(`Insufficient balance. You have ${ethBalance} ETH but need ${totalEth} ETH`);
         setShowLoading(false);
         return;
       }
 
-      const multiSender = new ethers.Contract(multiSenderAddress, SenderAbi, web3Provider);
-      const signer = web3Provider.getSigner(account);
+      const signer = await web3Provider.getSigner(account);
+      const multiSender = new Contract(multiSenderAddress, SenderAbi, signer);
 
       // Step-2: Sending Ether...
       let txIndex = 0;
       let txHashArr: string[] = [];
-      
+
       for (let index = 0; index < addressArray.length; index += pageSize) {
         txIndex++;
         let addressArr = tokenAddr.slice(index, index + pageSize);
         let amountWeiArr = amountAddr.slice(index, index + pageSize);
 
-        let sendValue = amountWeiArr.reduce((a, b) => a.add(b), BigNumber.from(0));
+        let sendValue = amountWeiArr.reduce((a, b) => a + b, 0n);
 
         setTips(`Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
         dispatch({ type: ActionType.TIPS, payload: `Sending Ether in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})` });
-        
+
         try {
-          let res = await multiSender.connect(signer).batchSendEther(addressArr, amountWeiArr, { 
-            from: account, 
-            value: ethers.utils.hexValue(sendValue) 
+          let res = await multiSender.batchSendEther(addressArr, amountWeiArr, {
+            value: sendValue
           });
-          
+
           let data = await res.wait();
-          txHashArr.push(data.hash || data?.transactionHash);
-          
+          txHashArr.push(data.hash);
+
           if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
             setShowLoading(false);
             dispatch({ type: ActionType.TIPS, payload: null });
@@ -462,15 +465,15 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
         return;
       }
 
-      const signer = web3Provider.getSigner(account);
+      const signer = await web3Provider.getSigner(account);
       const { tokenAddress } = first;
-      const multiSender = new ethers.Contract(multiSenderAddress, SenderAbi, web3Provider);
+      const multiSender = new Contract(multiSenderAddress, SenderAbi, signer);
 
       // Step-2: Sending
       let txIndex = 0;
       let txHashArr: string[] = [];
       let mySuccessArr = [...successArr];
-      
+
       for (let index = 0; index < tokenAddr.length; index += pageSize) {
         txIndex++;
         let addressArr = tokenAddr.slice(index, index + pageSize);
@@ -478,14 +481,14 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
         setTips(`Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})`);
         dispatch({ type: ActionType.TIPS, payload: `Sending ERC20 token in progress... (${txIndex}/${Math.ceil(addressArray.length / pageSize)})` });
-        
+
         try {
-          let rec = await multiSender.connect(signer).batchSendERC20(tokenAddress, addressArr, amountArr);
+          let rec = await multiSender.batchSendERC20(tokenAddress, addressArr, amountArr);
           let data = await rec.wait();
-          txHashArr.push(data.hash || data.transactionHash);
+          txHashArr.push(data.hash);
 
           mySuccessArr = mySuccessArr.concat(addressArr);
-          
+
           if (txIndex >= Math.ceil(addressArray.length / pageSize)) {
             setShowLoading(false);
             dispatch({ type: ActionType.TIPS, payload: null });
@@ -498,7 +501,7 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
           setErrorTips(e.data?.message || e.message);
         }
       }
-      
+
       setSuccessArr(mySuccessArr);
       downloadExcel(mySuccessArr);
     } catch (error) {
@@ -545,30 +548,32 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   const doApprove = async () => {
     if (first == null || tokenContract == null || !web3Provider || !account || !multiSenderAddress) return;
-    
+
     try {
-      const signer = web3Provider.getSigner(account);
+      const signer = await web3Provider.getSigner(account);
+      const tokenWithSigner = tokenContract.connect(signer) as Contract;
       const { decimals } = first;
 
       let _allowance = await tokenContract.allowance(account, multiSenderAddress);
 
       // Step-2: Approve
-      if (_allowance.lt(totalTokenAmount)) {
+      if (_allowance < totalTokenAmount) {
         if (selected === 'unlimited') {
           dispatch({ type: ActionType.TIPS, payload: `Unlimited Approve in progress...` });
-          
+
           try {
-            let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, ethers.constants.MaxUint256);
+            const MaxUint256 = 2n ** 256n - 1n;
+            let receipt = await tokenWithSigner.approve(multiSenderAddress, MaxUint256);
             setTips('Unlimited Approve in progress...');
 
             let data = await receipt.wait();
-            setTxHash(data.hash || data.transactionHash);
-            dispatch({ type: ActionType.STORE_TXHASH, payload: data.hash || data.transactionHash });
+            setTxHash(data.hash);
+            dispatch({ type: ActionType.STORE_TXHASH, payload: data.hash });
             dispatch({ type: ActionType.TIPS, payload: null });
             setShowApprove(false);
-            
+
             let after = await tokenContract.allowance(account, multiSenderAddress);
-            setAllowance(ethers.utils.formatUnits(after, decimals));
+            setAllowance(formatUnits(after, decimals));
           } catch (err: any) {
             console.error('approve error: ', err);
             setShowLoading(false);
@@ -577,19 +582,19 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
           }
         } else {
           dispatch({ type: ActionType.TIPS, payload: `Approve in progress...` });
-          
+
           try {
-            let receipt = await tokenContract.connect(signer).approve(multiSenderAddress, totalTokenAmount);
+            let receipt = await tokenWithSigner.approve(multiSenderAddress, totalTokenAmount);
             setTips('Approve in progress...');
-            
+
             let data = await receipt.wait();
-            setTxHash(data.hash || data.transactionHash);
-            dispatch({ type: ActionType.STORE_TXHASH, payload: data.hash || data.transactionHash });
+            setTxHash(data.hash);
+            dispatch({ type: ActionType.STORE_TXHASH, payload: data.hash });
             dispatch({ type: ActionType.TIPS, payload: null });
             setShowApprove(false);
-            
+
             let after = await tokenContract.allowance(account, multiSenderAddress);
-            setAllowance(ethers.utils.formatUnits(after, decimals));
+            setAllowance(formatUnits(after, decimals));
           } catch (err: any) {
             console.error('approve error: ', err);
             setErrorTips(err.data?.message || err.message);
@@ -622,7 +627,7 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   const QueryEther = () => {
     if (first == null || !web3Provider) return;
-    
+
     try {
       const { amounts, decimals } = first;
       setShowLoading(true);
@@ -633,37 +638,37 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
       let lines = amounts.split('\n');
       let _addressArray = [];
       let _amountWeiArray = [];
-      let _totalAmount = BigNumber.from('0');
+      let _totalAmount = 0n;
 
       for (let index = 0; index < lines.length; index++) {
         const line = lines[index].trim();
         if (!line) {
           continue;
         }
-        
+
         let values = line.split(',');
         if (values.length < 2) continue;
 
         let address = values[0].trim();
         let amountWei;
-        
+
         try {
-          amountWei = ethers.utils.parseEther(values[1].trim());
+          amountWei = parseEther(values[1].trim());
         } catch (error) {
           console.error('Error parsing amount:', error);
           continue;
         }
 
-        if (!ethers.utils.isAddress(address)) {
+        if (!isAddress(address)) {
           continue;
         }
 
         _addressArray.push(address);
         _amountWeiArray.push(amountWei);
 
-        _totalAmount = _totalAmount.add(BigNumber.from(amountWei));
+        _totalAmount = _totalAmount + amountWei;
       }
-      
+
       setTotalTokenAmount(_totalAmount);
       setTokenAddr(_addressArray);
       setAmountAddr(_amountWeiArray);
@@ -679,59 +684,59 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   const QueryToken = async () => {
     if (first == null || !tokenContract || !web3Provider || !account || !multiSenderAddress) return;
-    
+
     try {
       setShowLoading(true);
       setTips('Waiting...');
       dispatch({ type: ActionType.TIPS, payload: `Waiting...` });
-      
+
       const { amounts, tokenAddress } = first;
-      const multiSender = new ethers.Contract(multiSenderAddress, SenderAbi, web3Provider);
+      const multiSender = new Contract(multiSenderAddress, SenderAbi, web3Provider);
       const decimals = await tokenContract.decimals();
 
       // Step-1: Check balance...
       let lines = amounts.split('\n');
       let _addressArray = [];
       let _amountWeiArray = [];
-      let _totalAmount = BigNumber.from('0');
+      let _totalAmount = 0n;
 
       for (let index = 0; index < lines.length; index++) {
         const line = lines[index].trim();
         if (!line) {
           continue;
         }
-        
+
         let values = line.split(',');
         if (values.length < 2) continue;
 
         let address = values[0].trim();
         let amountWei;
-        
+
         try {
-          amountWei = ethers.utils.parseUnits(values[1].trim(), decimals);
+          amountWei = parseUnits(values[1].trim(), Number(decimals));
         } catch (error) {
           console.error('Error parsing amount:', error);
           continue;
         }
 
-        if (!ethers.utils.isAddress(address)) {
+        if (!isAddress(address)) {
           continue;
         }
 
         _addressArray.push(address);
         _amountWeiArray.push(amountWei);
 
-        _totalAmount = _totalAmount.add(BigNumber.from(amountWei));
+        _totalAmount = _totalAmount + amountWei;
       }
-      
+
       setTotalTokenAmount(_totalAmount);
       setTokenAddr(_addressArray);
       setAmountAddr(_amountWeiArray);
       dispatch({ type: ActionType.TIPS, payload: null });
       setShowLoading(false);
-      
+
       let _allowance = await tokenContract.allowance(account, multiSenderAddress);
-      if (_allowance.lt(_totalAmount)) {
+      if (_allowance < _totalAmount) {
         setShowApprove(true);
       } else {
         setShowApprove(false);

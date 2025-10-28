@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Navbar, Button } from 'react-bootstrap';
 import styled from 'styled-components';
-import { useWeb3 } from '../context/Web3Context';
+import { useWeb3, connectWallet } from '../context/Web3Context';
 import { ActionType } from '../context/types';
 
 const HeaderBox = styled(Navbar)`
@@ -42,8 +42,11 @@ const Header: React.FC = () => {
       try {
         const network = await web3Provider.getNetwork();
         let name = '';
-        
-        switch (network.chainId) {
+
+        // Convert bigint chainId to number for comparison
+        const chainIdNum = Number(network.chainId);
+
+        switch (chainIdNum) {
           case 1:
             name = 'Ethereum Mainnet';
             break;
@@ -69,21 +72,8 @@ const Header: React.FC = () => {
     getNetwork();
   }, [web3Provider]);
 
-  const connectWallet = async () => {
-    if (!web3Provider) return;
-    
-    try {
-      // Request account access
-      const accounts = await (window as any).ethereum.request({ 
-        method: 'eth_requestAccounts' 
-      });
-      
-      if (accounts.length > 0) {
-        dispatch({ type: ActionType.SET_ACCOUNT, payload: accounts[0] });
-      }
-    } catch (error) {
-      console.error('Error connecting wallet:', error);
-    }
+  const handleConnectWallet = async () => {
+    connectWallet(state, dispatch);
   };
 
   const formatAddress = (address: string) => {
@@ -102,10 +92,10 @@ const Header: React.FC = () => {
           {account ? (
             <span className="account-display">{formatAddress(account)}</span>
           ) : (
-            <Button 
-              variant="primary" 
-              className="connect-btn" 
-              onClick={connectWallet}
+            <Button
+              variant="primary"
+              className="connect-btn"
+              onClick={handleConnectWallet}
             >
               Connect Wallet
             </Button>

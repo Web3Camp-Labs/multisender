@@ -3,7 +3,7 @@ import { Row, Col, Form, FloatingLabel, Button, Alert } from 'react-bootstrap';
 import styled from 'styled-components';
 import { useWeb3 } from '../context/Web3Context';
 import { ActionType } from '../context/types';
-import { ethers } from 'ethers';
+import { Contract, isAddress } from 'ethers';
 import TokenAbi from '../abi/ERC20.json';
 import ConfigJson from '../config/config.json';
 import ExcelImport from './ExcelImport';
@@ -79,17 +79,17 @@ const Step1: React.FC<Props> = ({ handleNext }) => {
 
     const getDecimals = async () => {
       if (tokenAddress === "0x000000000000000000000000000000000000bEEF") return;
-      
+
       try {
-        const tokenContract = new ethers.Contract(tokenAddress, TokenAbi, web3Provider);
+        const tokenContract = new Contract(tokenAddress, TokenAbi, web3Provider);
         const decimals = await tokenContract.decimals();
-        setDecimals(decimals);
+        setDecimals(Number(decimals));
         setErrorTips('');
       } catch (err: any) {
         setErrorTips(err.data?.message || err.message);
       }
     };
-    
+
     getDecimals();
   }, [tokenAddress, web3Provider]);
 
@@ -102,7 +102,8 @@ const Step1: React.FC<Props> = ({ handleNext }) => {
     
     try {
       const { chainId } = await web3Provider.getNetwork();
-      const chainArr = ConfigJson.networks.filter(item => item.chainId === chainId);
+      // Convert bigint chainId to number for comparison with JSON config
+      const chainArr = ConfigJson.networks.filter(item => item.chainId === Number(chainId));
       
       if (chainArr.length) {
         setSupport(true);
@@ -150,8 +151,8 @@ const Step1: React.FC<Props> = ({ handleNext }) => {
         amount
       });
       
-      let isAddress = ethers.utils.isAddress(address);
-      if (isAddress && !isNaN(parseFloat(amount))) {
+      let isValidAddress = isAddress(address);
+      if (isValidAddress && !isNaN(parseFloat(amount))) {
         amountStr += `${address},${parseFloat(amount)}\n`; // No trailing space before \n
       }
     });

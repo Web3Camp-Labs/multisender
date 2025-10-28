@@ -35,7 +35,8 @@ const Step3: React.FC<Props> = ({ handlePrev }) => {
       try {
         let url = "";
         const { chainId } = await web3Provider.getNetwork();
-        const urlArr = UrlJson.filter(item => item.id === chainId);
+        // Convert bigint chainId to number for comparison with JSON config
+        const urlArr = UrlJson.filter(item => item.id === Number(chainId));
         url = urlArr[0]?.url || '';
         setTxURL(url);
       } catch (error) {

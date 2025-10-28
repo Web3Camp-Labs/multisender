@@ -17,14 +17,5 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: true,
-    commonjsOptions: {
-      transformMixedEsModules: true,
-    },
-  },
-  optimizeDeps: {
-    include: ['bn.js', 'bignumber.js'],
-    esbuildOptions: {
-      target: 'es2020',
-    },
   },
 });

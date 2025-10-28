@@ -1,5 +1,5 @@
 import { Dispatch } from "react";
-import { ethers } from "ethers";
+import { BrowserProvider } from "ethers";
 
 interface FirstObj {
   amounts: string;
@@ -17,7 +17,7 @@ export type State = {
   tips: string | null;
   importRecord: AddressObj[] | null;
   first: FirstObj | null;
-  web3Provider: ethers.providers.Web3Provider | null;
+  web3Provider: BrowserProvider | null;
   txHash: string | null;
   txHashList: string[];
 }

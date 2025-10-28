@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useReducer, useEffect, useMemo } from 'react';
-import { ethers } from "ethers";
+import { BrowserProvider } from "ethers";
 import reducer from './reducer';
 import INIT_STATE from './initState';
 import { ContextType, State, Action, ActionType } from "./types";
@@ -10,37 +10,51 @@ interface Props {
   children: ReactNode;
 }
 
-const connect = async (state: State, dispatch: React.Dispatch<Action>) => {
-  if (typeof window !== "undefined") {
-    const { web3Provider } = state;
+// Initialize provider without prompting wallet connection
+const initProvider = async (dispatch: React.Dispatch<Action>) => {
+  if (typeof window === "undefined") return;
 
-    if (web3Provider != null) return;
-    
-    // Check if ethereum is available
-    if (!(window as any).ethereum) {
-      dispatch({ type: ActionType.TIPS, payload: "MetaMask or compatible wallet not found. Please install MetaMask or another wallet extension." });
-      return;
+  // Check if ethereum is available
+  if (!(window as any).ethereum) {
+    dispatch({ type: ActionType.TIPS, payload: "MetaMask or compatible wallet not found. Please install MetaMask or another wallet extension." });
+    return;
+  }
+
+  try {
+    // Create provider instance without requesting accounts (no popup)
+    const web3Instance = new BrowserProvider((window as any).ethereum);
+    dispatch({ type: ActionType.CONNECT, payload: web3Instance });
+  } catch (error: any) {
+    console.error("Error initializing provider:", error);
+  }
+};
+
+// Connect wallet - this will prompt the user
+export const connectWallet = async (state: State, dispatch: React.Dispatch<Action>) => {
+  if (typeof window === "undefined") return;
+
+  const { web3Provider } = state;
+
+  if (!web3Provider) {
+    dispatch({ type: ActionType.TIPS, payload: "Web3 provider not initialized" });
+    return;
+  }
+
+  try {
+    dispatch({ type: ActionType.TIPS, payload: "Connecting to wallet..." });
+
+    // Request account access - this triggers wallet popup
+    const accounts = await (window as any).ethereum.request({
+      method: 'eth_requestAccounts'
+    });
+
+    if (accounts.length > 0) {
+      dispatch({ type: ActionType.SET_ACCOUNT, payload: accounts[0] });
+      dispatch({ type: ActionType.TIPS, payload: null });
     }
-    
-    try {
-      dispatch({ type: ActionType.TIPS, payload: "Connecting to wallet..." });
-      const web3Instance = new ethers.providers.Web3Provider((window as any).ethereum);
-      
-      if (web3Instance) {
-        // Get accounts
-        const accounts = await web3Instance.listAccounts();
-        if (accounts.length > 0) {
-          dispatch({ type: ActionType.SET_ACCOUNT, payload: accounts[0] });
-        }
-        dispatch({ type: ActionType.CONNECT, payload: web3Instance });
-        dispatch({ type: ActionType.TIPS, payload: null }); // Clear tips on success
-      } else {
-        dispatch({ type: ActionType.TIPS, payload: "Failed to create Web3 provider instance." });
-      }
-    } catch (error: any) {
-      dispatch({ type: ActionType.TIPS, payload: `Error connecting to wallet: ${error?.message || error}` });
-      console.error("Error connecting to wallet:", error);
-    }
+  } catch (error: any) {
+    dispatch({ type: ActionType.TIPS, payload: `Error connecting to wallet: ${error?.message || error}` });
+    console.error("Error connecting to wallet:", error);
   }
 };
 
@@ -49,8 +63,9 @@ export const Web3Provider = ({ children }: Props) => {
   const { web3Provider } = state;
 
   useEffect(() => {
+    // Only initialize provider on mount, don't auto-connect
     if (web3Provider == null) {
-      connect(state, dispatch);
+      initProvider(dispatch);
     }
     
     // Setup event listeners for account changes
