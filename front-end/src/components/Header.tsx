@@ -189,7 +189,8 @@ const Header: React.FC = () => {
     };
 
     checkConnection();
-  }, [account, dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const openWalletModal = () => {
     if (!isWalletAvailable()) {
