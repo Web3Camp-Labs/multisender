@@ -255,7 +255,7 @@ const Step1: React.FC<Props> = ({ handleNext }) => {
       </TipsBox>
       <div>
         <Button
-          variant="flat"
+          variant={!support || btnDisabled ? "secondary" : "primary"}
           onClick={() => nextPage()}
           disabled={!support || btnDisabled}
         >

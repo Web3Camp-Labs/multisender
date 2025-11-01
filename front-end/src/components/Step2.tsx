@@ -895,7 +895,7 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
         <div className="ml2">
           <div className="d-flex align-items-center gap-3">
             <Button
-              variant="flat"
+              variant={showLoading ? "secondary" : "primary"}
               onClick={doApprove}
               disabled={showLoading}
             >
@@ -933,7 +933,7 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
               Back
             </Button>
             <Button
-              variant="flat"
+              variant={showLoading ? "secondary" : "primary"}
               onClick={doSend}
               disabled={showLoading}
             >
