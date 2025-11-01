@@ -5,15 +5,16 @@ import UrlJson from '../config/url.json';
 
 const Box = styled.div`
   h5 {
-    padding: 10px 0 5px;
+    padding: 8px 0 4px;
     color: #000000;
+    margin-bottom: 10px;
   }
-  
+
   .transaction {
-    padding: 20px 0 40px;
-    
+    padding: 10px 0 20px;
+
     li {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       word-break: break-all;
     }
   }

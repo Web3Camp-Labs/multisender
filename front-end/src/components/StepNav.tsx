@@ -15,7 +15,7 @@ const steps = [
 
 const StepNav: React.FC<StepNavProps> = ({ currentStep, onStepChange }) => {
   return (
-    <div className="my-4">
+    <div className="my-3">
       <ul className="nav justify-content-center align-items-center">
         {steps.map((step, idx) => (
           <li

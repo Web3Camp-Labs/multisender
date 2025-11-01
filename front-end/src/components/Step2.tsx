@@ -10,72 +10,77 @@ import UrlJson from '../config/url.json';
 import ConfigJson from '../config/config.json';
 
 const Box = styled.div`
-  padding: 40px 0;
-  
+  padding: 10px 0;
+
   .numbers {
     font-size: 20px;
   }
-  
+
   .tips {
     font-size: 12px;
     color: #999;
   }
-  
+
   h5 {
-    padding: 10px 0 5px 10px;
+    padding: 8px 0 4px 10px;
     color: #000000;
+    margin-bottom: 10px;
   }
-  
+
   .ml2 {
     margin-left: 10px;
   }
-  
+
   .flexNumber {
     word-break: break-all;
   }
 `;
 
 const TableBox = styled.div`
-  margin-top: 10px;
-  height: 470px;
-  padding-bottom: 20px;
+  margin-top: 8px;
+  height: 280px;
+  padding-bottom: 10px;
   overflow-y: auto;
-  
+
   .tableStyle {
     border-top: 1px solid #eee;
     color: #666666;
-    
+    font-size: 14px;
+
     th {
-      height: 60px;
-      line-height: 60px;
+      height: 40px;
+      line-height: 40px;
+      padding: 8px 12px;
+      font-weight: 600;
     }
-    
+
     .first {
       display: flex;
       justify-content: center;
       align-items: stretch;
-      
+
       .form-check-inline {
         margin-right: 0;
         display: flex;
         margin-top: 13px;
       }
     }
-    
+
     td {
-      line-height: 50px;
+      line-height: 36px;
+      padding: 6px 12px;
       word-break: break-all;
-      
+
       &:nth-child(4) {
         width: 30%;
       }
     }
-    
+
     tr:nth-child(2n+1) td {
       background: rgba(255, 255, 255, 0.3) !important;
       color: #666666 !important;
     }
-    
+
     tr:hover td {
       background: rgba(0, 0, 0, 0.01) !important;
     }
@@ -84,11 +89,11 @@ const TableBox = styled.div`
 
 const H5Box = styled.h5`
   display: inline-block;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 `;
 
 const TipsBox = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 `;
 
 interface AccountObj {
@@ -103,7 +108,7 @@ interface Props {
 
 const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
   const { state, dispatch } = useWeb3();
-  const { account, first, web3Provider, importRecord } = state;
+  const { account, first, web3Provider, importRecord, tips: globalTips } = state;
 
   // UI and transaction state
   const [totalAmount, setTotalAmount] = useState<string>('0');
@@ -770,7 +775,15 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
   return (
     <Box>
       <div className="mb-3">
-        <h5>List of recipients</h5>
+        <div className="d-flex align-items-center mb-2">
+          <h5 className="mb-0 me-3">List of recipients</h5>
+          {globalTips && (globalTips.toLowerCase().includes('query') || globalTips.toLowerCase().includes('waiting')) && (
+            <div className="text-info" style={{ fontSize: '13px' }}>
+              <span className="spinner-border spinner-border-sm me-2" style={{ width: '14px', height: '14px' }} />
+              {globalTips}
+            </div>
+          )}
+        </div>
         <TableBox>
           <Table striped borderless hover className="tableStyle">
             <thead>
@@ -878,53 +891,74 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
           </Form.Group>
         </div>
       )}
-      <TipsBox>
-        {!!errorTips.length && <Alert variant='danger'>{errorTips}</Alert>}
-        {showLoading && tips && <Alert variant='info'>
-          <span className="spinner-border spinner-border-sm me-2" />
-          {tips}
-        </Alert>}
-      </TipsBox>
       {showApprove ? (
         <div className="ml2">
-          <Button
-            variant="flat"
-            onClick={doApprove}
-            disabled={showLoading}
-          >
-            {showLoading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" />
-                Approving...
-              </>
-            ) : (
-              'Approve'
+          <div className="d-flex align-items-center gap-3">
+            <Button
+              variant="flat"
+              onClick={doApprove}
+              disabled={showLoading}
+            >
+              {showLoading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" />
+                  Approving...
+                </>
+              ) : (
+                'Approve'
+              )}
+            </Button>
+            {showLoading && tips && (
+              <div className="text-info" style={{ fontSize: '13px' }}>
+                <span className="spinner-border spinner-border-sm me-2" style={{ width: '14px', height: '14px' }} />
+                {tips}
+              </div>
             )}
-          </Button>
+            {!!errorTips.length && (
+              <div className="text-danger" style={{ fontSize: '13px' }}>
+                <span className="me-1">⚠️</span>
+                {errorTips}
+              </div>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="ml2 d-flex gap-2">
-          <Button
-            variant="secondary"
-            onClick={handlePrev}
-            disabled={showLoading}
-          >
-            Back
-          </Button>
-          <Button
-            variant="flat"
-            onClick={doSend}
-            disabled={showLoading}
-          >
-            {showLoading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" />
-                Sending...
-              </>
-            ) : (
-              'Send'
+        <div className="ml2">
+          <div className="d-flex align-items-center gap-3">
+            <Button
+              variant="secondary"
+              onClick={handlePrev}
+              disabled={showLoading}
+            >
+              Back
+            </Button>
+            <Button
+              variant="flat"
+              onClick={doSend}
+              disabled={showLoading}
+            >
+              {showLoading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" />
+                  Sending...
+                </>
+              ) : (
+                'Send'
+              )}
+            </Button>
+            {showLoading && tips && (
+              <div className="text-info" style={{ fontSize: '13px' }}>
+                <span className="spinner-border spinner-border-sm me-2" style={{ width: '14px', height: '14px' }} />
+                {tips}
+              </div>
             )}
-          </Button>
+            {!!errorTips.length && (
+              <div className="text-danger" style={{ fontSize: '13px' }}>
+                <span className="me-1">⚠️</span>
+                {errorTips}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </Box>

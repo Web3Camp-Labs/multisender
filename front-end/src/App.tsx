@@ -34,16 +34,16 @@ function App() {
   return (
     <div className="d-flex flex-column min-vh-100">
       <Header />
-      <main className="flex-grow-1">
+      <main className="flex-grow-1" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
         <div className="container">
-          {tips && (
-            <div className="alert alert-info text-center my-3" role="alert">
+          {tips && !tips.toLowerCase().includes('query') && !tips.toLowerCase().includes('waiting') && !tips.toLowerCase().includes('approve') && !tips.toLowerCase().includes('sending') && (
+            <div className="alert alert-info text-center my-2" role="alert">
               {tips}
               {tips.toLowerCase().includes('connect') && <Loading />}
             </div>
           )}
           <StepNav currentStep={step} onStepChange={handleStepChange} />
-          <div className="card p-4 mb-4">
+          <div className="card p-3 mb-3">
             {step === 1 && <Step1 handleNext={handleNext} />}
             {step === 2 && <Step2 handleNext={handleNext} handlePrev={handlePrev} />}
             {step === 3 && <Step3 handlePrev={handlePrev} />}

@@ -31,7 +31,7 @@ const Box = styled.div`
 `;
 
 const TipsBox = styled.div`
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 `;
 
 interface Props {
