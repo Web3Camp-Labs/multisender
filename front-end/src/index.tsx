@@ -12,13 +12,11 @@ const root = ReactDOM.createRoot(
 );
 
 root.render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <Web3Provider>
-        <App />
-      </Web3Provider>
-    </ErrorBoundary>
-  </React.StrictMode>
+  <ErrorBoundary>
+    <Web3Provider>
+      <App />
+    </Web3Provider>
+  </ErrorBoundary>
 );
 
 reportWebVitals();

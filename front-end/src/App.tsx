@@ -32,20 +32,22 @@ function App() {
   };
 
   return (
-    <div className="container d-flex flex-column min-vh-100">
+    <div className="d-flex flex-column min-vh-100">
       <Header />
       <main className="flex-grow-1">
-        {tips && (
-          <div className="alert alert-info text-center my-3" role="alert">
-            {tips}
-            {tips.toLowerCase().includes('connect') && <Loading />}
+        <div className="container">
+          {tips && (
+            <div className="alert alert-info text-center my-3" role="alert">
+              {tips}
+              {tips.toLowerCase().includes('connect') && <Loading />}
+            </div>
+          )}
+          <StepNav currentStep={step} onStepChange={handleStepChange} />
+          <div className="card p-4 mb-4">
+            {step === 1 && <Step1 handleNext={handleNext} />}
+            {step === 2 && <Step2 handleNext={handleNext} handlePrev={handlePrev} />}
+            {step === 3 && <Step3 handlePrev={handlePrev} />}
           </div>
-        )}
-        <StepNav currentStep={step} onStepChange={handleStepChange} />
-        <div className="card p-4 mb-4">
-          {step === 1 && <Step1 handleNext={handleNext} />}
-          {step === 2 && <Step2 handleNext={handleNext} handlePrev={handlePrev} />}
-          {step === 3 && <Step3 handlePrev={handlePrev} />}
         </div>
       </main>
       <Footer />

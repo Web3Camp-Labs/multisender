@@ -52,12 +52,12 @@ const Step3: React.FC<Props> = ({ handlePrev }) => {
       <div>
         {txHash != null && (
           <>
-            <h5>Approval history</h5>
+            <h5>Approval Tx Hash</h5>
             <ul className='transaction'>
               <li>
-                <a 
-                  href={`${txURL}/${txHash}`} 
-                  target="_blank" 
+                <a
+                  href={`${txURL}/${txHash}`}
+                  target="_blank"
                   rel="noopener noreferrer"
                 >
                   {txHash}
@@ -66,7 +66,7 @@ const Step3: React.FC<Props> = ({ handlePrev }) => {
             </ul>
           </>
         )}
-        <h5>Transactions history</h5>
+        <h5>Transactions</h5>
         <ul className='transaction'>
           {txHashList && txHashList.map((hash: string) => (
             <li key={hash}>

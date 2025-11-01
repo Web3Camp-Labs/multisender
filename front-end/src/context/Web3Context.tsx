@@ -58,6 +58,12 @@ export const connectWallet = async (state: State, dispatch: React.Dispatch<Actio
   }
 };
 
+// Disconnect wallet
+export const disconnectWallet = (dispatch: React.Dispatch<Action>) => {
+  dispatch({ type: ActionType.SET_ACCOUNT, payload: null });
+  dispatch({ type: ActionType.TIPS, payload: null });
+};
+
 export const Web3Provider = ({ children }: Props) => {
   const [state, dispatch] = useReducer(reducer, INIT_STATE);
   const { web3Provider } = state;

@@ -147,7 +147,11 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
 
   // Utility: Estimate gas and fee for the next transaction
   const estimateGasAndFee = useCallback(async () => {
+    // Only estimate if we have all required data
     if (!web3Provider || !account || !multiSenderAddress || !first) return;
+    if (!tokenAddr.length || !amountAddr.length) return;
+    if (totalTokenAmount === 0n) return;
+
     try {
       setEstimatedGas('');
       setEstimatedFee('');
@@ -155,22 +159,20 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
       let fee = null;
       const signer = await web3Provider.getSigner(account);
       const { tokenAddress } = first;
+
       if (tokenAddress === '0x000000000000000000000000000000000000bEEF') {
         // Estimate gas for ETH multisend
         const multiSender = new Contract(multiSenderAddress, SenderAbi, signer);
-        if (tokenAddr.length && amountAddr.length) {
-          gas = await multiSender.batchSendEther.estimateGas(tokenAddr, amountAddr, {
-            value: totalTokenAmount,
-          });
-        }
+        gas = await multiSender.batchSendEther.estimateGas(tokenAddr, amountAddr, {
+          value: totalTokenAmount,
+        });
       } else if (tokenContract) {
         // Estimate gas for ERC20 multisend
         const multiSender = new Contract(multiSenderAddress, SenderAbi, signer);
-        if (tokenAddr.length && amountAddr.length) {
-          const tokenAddress = await tokenContract.getAddress();
-          gas = await multiSender.batchSendERC20.estimateGas(tokenAddress, tokenAddr, amountAddr);
-        }
+        const tokenAddress = await tokenContract.getAddress();
+        gas = await multiSender.batchSendERC20.estimateGas(tokenAddress, tokenAddr, amountAddr);
       }
+
       if (gas) {
         setEstimatedGas(gas.toString());
         // Get current gas price
@@ -180,10 +182,10 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
         setEstimatedFee(formatEther(fee));
       }
     } catch (error) {
+      // Silently fail - gas estimation is not critical
       setEstimatedGas('');
       setEstimatedFee('');
-      // Don't block UI on estimation error, but log it
-      console.error('Error estimating gas:', error);
+      console.log('Gas estimation not available');
     }
   }, [web3Provider, account, multiSenderAddress, first, tokenAddr, amountAddr, totalTokenAmount, tokenContract]);
 
@@ -549,6 +551,9 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
   const doApprove = async () => {
     if (first == null || tokenContract == null || !web3Provider || !account || !multiSenderAddress) return;
 
+    setShowLoading(true);
+    setErrorTips('');
+
     try {
       const signer = await web3Provider.getSigner(account);
       const tokenWithSigner = tokenContract.connect(signer) as Contract;
@@ -559,39 +564,44 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
       // Step-2: Approve
       if (_allowance < totalTokenAmount) {
         if (selected === 'unlimited') {
+          setTips('Unlimited Approve in progress...');
           dispatch({ type: ActionType.TIPS, payload: `Unlimited Approve in progress...` });
 
           try {
             const MaxUint256 = 2n ** 256n - 1n;
             let receipt = await tokenWithSigner.approve(multiSenderAddress, MaxUint256);
-            setTips('Unlimited Approve in progress...');
 
             let data = await receipt.wait();
             setTxHash(data.hash);
             dispatch({ type: ActionType.STORE_TXHASH, payload: data.hash });
             dispatch({ type: ActionType.TIPS, payload: null });
             setShowApprove(false);
+            setShowLoading(false);
+            setTips('');
 
             let after = await tokenContract.allowance(account, multiSenderAddress);
             setAllowance(formatUnits(after, decimals));
           } catch (err: any) {
             console.error('approve error: ', err);
             setShowLoading(false);
+            setTips('');
             dispatch({ type: ActionType.TIPS, payload: null });
             setErrorTips(err.data?.message || err.message);
           }
         } else {
+          setTips('Approve in progress...');
           dispatch({ type: ActionType.TIPS, payload: `Approve in progress...` });
 
           try {
             let receipt = await tokenWithSigner.approve(multiSenderAddress, totalTokenAmount);
-            setTips('Approve in progress...');
 
             let data = await receipt.wait();
             setTxHash(data.hash);
             dispatch({ type: ActionType.STORE_TXHASH, payload: data.hash });
             dispatch({ type: ActionType.TIPS, payload: null });
             setShowApprove(false);
+            setShowLoading(false);
+            setTips('');
 
             let after = await tokenContract.allowance(account, multiSenderAddress);
             setAllowance(formatUnits(after, decimals));
@@ -599,14 +609,18 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
             console.error('approve error: ', err);
             setErrorTips(err.data?.message || err.message);
             setShowLoading(false);
+            setTips('');
             dispatch({ type: ActionType.TIPS, payload: null });
           }
         }
+      } else {
+        setShowLoading(false);
       }
     } catch (error) {
       console.error('Error in doApprove:', error);
       setErrorTips('Error approving tokens');
       setShowLoading(false);
+      setTips('');
       dispatch({ type: ActionType.TIPS, payload: null });
     }
   };
@@ -616,6 +630,10 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
       setErrorTips('No transaction data found. Please check your input.');
       return;
     }
+
+    setShowLoading(true);
+    setErrorTips('');
+    setTips('Preparing transaction...');
 
     const { tokenAddress } = first;
     if (tokenAddress === '0x000000000000000000000000000000000000bEEF') { // Ether
@@ -862,6 +880,10 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
       )}
       <TipsBox>
         {!!errorTips.length && <Alert variant='danger'>{errorTips}</Alert>}
+        {showLoading && tips && <Alert variant='info'>
+          <span className="spinner-border spinner-border-sm me-2" />
+          {tips}
+        </Alert>}
       </TipsBox>
       {showApprove ? (
         <div className="ml2">
@@ -870,8 +892,14 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
             onClick={doApprove}
             disabled={showLoading}
           >
-            {showLoading ? <span className="spinner-border spinner-border-sm me-2" /> : null}
-            Approve
+            {showLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" />
+                Approving...
+              </>
+            ) : (
+              'Approve'
+            )}
           </Button>
         </div>
       ) : (
@@ -879,6 +907,7 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
           <Button
             variant="secondary"
             onClick={handlePrev}
+            disabled={showLoading}
           >
             Back
           </Button>
@@ -887,8 +916,14 @@ const Step2: React.FC<Props> = ({ handleNext, handlePrev }) => {
             onClick={doSend}
             disabled={showLoading}
           >
-            {showLoading ? <span className="spinner-border spinner-border-sm me-2" /> : null}
-            Send
+            {showLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" />
+                Sending...
+              </>
+            ) : (
+              'Send'
+            )}
           </Button>
         </div>
       )}

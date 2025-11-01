@@ -179,15 +179,16 @@ const Step1: React.FC<Props> = ({ handleNext }) => {
 
   const getChildrenMsg = (data: any[]) => {
     let str = '';
-    
+
     for (let ele of data) {
-      let eleStr = [];
-      for (let key in ele) {
-        eleStr.push(ele[key]);
+      // Explicitly use address and amount properties to ensure correct order
+      if (ele.address && ele.amount) {
+        str += `${ele.address},${ele.amount}\n`;
       }
-      str += eleStr.join(",");
-      str += "\n";
     }
+
+    // Remove trailing newline if present
+    str = str.trim();
 
     setAmounts(str);
   };
@@ -249,6 +250,8 @@ const Step1: React.FC<Props> = ({ handleNext }) => {
       </Row>
       <TipsBox>
         {!!errorTips.length && <Alert variant="danger">{errorTips}</Alert>}
+        {!account && <Alert variant="warning">Please connect your wallet to continue</Alert>}
+        {support === false && <Alert variant="danger">This network is not supported. Please switch to a supported network.</Alert>}
       </TipsBox>
       <div>
         <Button
