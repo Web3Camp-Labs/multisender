@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, notification, Dropdown, Menu } from 'antd';
+import { Button, notification, Dropdown } from 'antd';
 import { WalletOutlined, DisconnectOutlined, CopyOutlined, HomeOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useWeb3, disconnectWallet as disconnectFromContext } from '../context/Web3Context';
@@ -263,26 +263,38 @@ const Header: React.FC = () => {
     window.location.href = '#';
   };
 
-  const walletMenu = (
-    <Menu>
-      {selectedWalletName && (
-        <>
-          <Menu.Item key="wallet" disabled style={{ cursor: 'default' }}>
-            <span style={{ color: '#667eea', fontWeight: 600 }}>
-              {selectedWalletName}
-            </span>
-          </Menu.Item>
-          <Menu.Divider />
-        </>
-      )}
-      <Menu.Item key="copy" onClick={copyAddress} icon={<CopyOutlined />}>
-        Copy Address
-      </Menu.Item>
-      <Menu.Item key="disconnect" onClick={handleDisconnect} icon={<DisconnectOutlined />}>
-        Disconnect
-      </Menu.Item>
-    </Menu>
-  );
+  const getMenuItems = () => {
+    const items: any[] = [];
+
+    if (selectedWalletName) {
+      items.push({
+        key: 'wallet',
+        disabled: true,
+        label: (
+          <span style={{ color: '#667eea', fontWeight: 600 }}>
+            {selectedWalletName}
+          </span>
+        ),
+      });
+      items.push({ type: 'divider' });
+    }
+
+    items.push({
+      key: 'copy',
+      icon: <CopyOutlined />,
+      label: 'Copy Address',
+      onClick: copyAddress,
+    });
+
+    items.push({
+      key: 'disconnect',
+      icon: <DisconnectOutlined />,
+      label: 'Disconnect',
+      onClick: handleDisconnect,
+    });
+
+    return items;
+  };
 
   return (
     <>
@@ -310,7 +322,7 @@ const Header: React.FC = () => {
             Connect Wallet
           </Button>
         ) : (
-          <Dropdown overlay={walletMenu} trigger={['click']}>
+          <Dropdown menu={{ items: getMenuItems() }} trigger={['click']}>
             <AccountDisplay>
               {networkName && (
                 <NetworkBadge color={networkColor}>
