@@ -3,6 +3,7 @@ import { BrowserProvider } from "ethers";
 import reducer from './reducer';
 import INIT_STATE from './initState';
 import { ContextType, State, Action, ActionType } from "./types";
+import { getProvider } from '../utils/walletUtils';
 
 const Web3Context = createContext<ContextType>({} as ContextType);
 
@@ -14,16 +15,24 @@ interface Props {
 const initProvider = async (dispatch: React.Dispatch<Action>) => {
   if (typeof window === "undefined") return;
 
-  // Check if ethereum is available
-  if (!(window as any).ethereum) {
+  // Get provider from wallet utils (prioritizes selected wallet)
+  const provider = getProvider();
+
+  if (!provider) {
     dispatch({ type: ActionType.TIPS, payload: "MetaMask or compatible wallet not found. Please install MetaMask or another wallet extension." });
     return;
   }
 
   try {
     // Create provider instance without requesting accounts (no popup)
-    const web3Instance = new BrowserProvider((window as any).ethereum);
+    const web3Instance = new BrowserProvider(provider);
     dispatch({ type: ActionType.CONNECT, payload: web3Instance });
+
+    // Check if already connected
+    const accounts = await provider.request({ method: 'eth_accounts' });
+    if (accounts.length > 0) {
+      dispatch({ type: ActionType.SET_ACCOUNT, payload: accounts[0] });
+    }
   } catch (error: any) {
     console.error("Error initializing provider:", error);
   }
@@ -73,9 +82,10 @@ export const Web3Provider = ({ children }: Props) => {
     if (web3Provider == null) {
       initProvider(dispatch);
     }
-    
+
     // Setup event listeners for account changes
-    if (typeof window !== "undefined" && (window as any).ethereum) {
+    const provider = getProvider();
+    if (typeof window !== "undefined" && provider) {
       const handleAccountsChanged = (accounts: string[]) => {
         if (accounts.length === 0) {
           // User disconnected their wallet
@@ -92,14 +102,14 @@ export const Web3Provider = ({ children }: Props) => {
         window.location.reload();
       };
 
-      (window as any).ethereum.on('accountsChanged', handleAccountsChanged);
-      (window as any).ethereum.on('chainChanged', handleChainChanged);
+      provider.on('accountsChanged', handleAccountsChanged);
+      provider.on('chainChanged', handleChainChanged);
 
       // Cleanup event listeners
       return () => {
-        if ((window as any).ethereum.removeListener) {
-          (window as any).ethereum.removeListener('accountsChanged', handleAccountsChanged);
-          (window as any).ethereum.removeListener('chainChanged', handleChainChanged);
+        if (provider.removeListener) {
+          provider.removeListener('accountsChanged', handleAccountsChanged);
+          provider.removeListener('chainChanged', handleChainChanged);
         }
       };
     }

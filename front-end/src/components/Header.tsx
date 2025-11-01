@@ -2,7 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Button, notification, Dropdown, Menu } from 'antd';
 import { WalletOutlined, DisconnectOutlined, CopyOutlined, HomeOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useWeb3, connectWallet, disconnectWallet } from '../context/Web3Context';
+import { useWeb3, disconnectWallet as disconnectFromContext } from '../context/Web3Context';
+import { ActionType } from '../context/types';
+import WalletModal from './WalletModal';
+import {
+  connectWallet as connectToWallet,
+  disconnectWallet as disconnectFromWallet,
+  getSelectedWallet,
+  isWalletAvailable,
+  Wallet
+} from '../utils/walletUtils';
 
 const HeaderTop = styled.div`
     display: flex;
@@ -102,6 +111,8 @@ const Header: React.FC = () => {
   const [networkColor, setNetworkColor] = useState<string>('#52c41a');
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [showWalletModal, setShowWalletModal] = useState<boolean>(false);
+  const [selectedWalletName, setSelectedWalletName] = useState<string>('');
 
   useEffect(() => {
     const getNetwork = async () => {
@@ -158,15 +169,54 @@ const Header: React.FC = () => {
     getNetwork();
   }, [web3Provider]);
 
-  const handleConnectWallet = async () => {
+  // Check if wallet is already connected on mount
+  useEffect(() => {
+    const checkConnection = async () => {
+      const selectedWallet = getSelectedWallet();
+      if (selectedWallet && selectedWallet.provider) {
+        setSelectedWalletName(selectedWallet.name);
+
+        // Check if accounts are already connected
+        try {
+          const accounts = await selectedWallet.provider.request({ method: 'eth_accounts' });
+          if (accounts.length > 0 && !account) {
+            dispatch({ type: ActionType.SET_ACCOUNT, payload: accounts[0] });
+          }
+        } catch (error) {
+          console.error('Error checking wallet connection:', error);
+        }
+      }
+    };
+
+    checkConnection();
+  }, [account, dispatch]);
+
+  const openWalletModal = () => {
+    if (!isWalletAvailable()) {
+      notification.warning({
+        message: 'No Wallet Detected',
+        description: 'Please install MetaMask, Coinbase Wallet, or another compatible wallet extension.',
+        duration: 5,
+      });
+    }
+    setShowWalletModal(true);
+  };
+
+  const handleWalletConnect = async (wallet: Wallet) => {
     setIsConnecting(true);
 
     try {
-      await connectWallet(state, dispatch);
+      const connectedAccount = await connectToWallet(wallet);
+      setSelectedWalletName(wallet.name);
+
+      // Update Web3Context with the connected account
+      dispatch({ type: ActionType.SET_ACCOUNT, payload: connectedAccount });
+
+      setShowWalletModal(false);
 
       notification.success({
         message: 'Wallet Connected',
-        description: 'Successfully connected to your wallet!',
+        description: `Successfully connected to ${wallet.name}!`,
         duration: 3,
       });
     } catch (error: any) {
@@ -181,7 +231,9 @@ const Header: React.FC = () => {
   };
 
   const handleDisconnect = () => {
-    disconnectWallet(dispatch);
+    disconnectFromWallet();
+    disconnectFromContext(dispatch);
+    setSelectedWalletName('');
     notification.info({
       message: 'Wallet Disconnected',
       description: 'Your wallet has been disconnected from this app.',
@@ -212,6 +264,16 @@ const Header: React.FC = () => {
 
   const walletMenu = (
     <Menu>
+      {selectedWalletName && (
+        <>
+          <Menu.Item key="wallet" disabled style={{ cursor: 'default' }}>
+            <span style={{ color: '#667eea', fontWeight: 600 }}>
+              {selectedWalletName}
+            </span>
+          </Menu.Item>
+          <Menu.Divider />
+        </>
+      )}
       <Menu.Item key="copy" onClick={copyAddress} icon={<CopyOutlined />}>
         Copy Address
       </Menu.Item>
@@ -222,6 +284,7 @@ const Header: React.FC = () => {
   );
 
   return (
+    <>
     <HeaderTop>
       <Logo onClick={backToHome}>
         <div className="logo-text">MultiSender</div>
@@ -240,7 +303,7 @@ const Header: React.FC = () => {
           <Button
             type="primary"
             icon={<WalletOutlined />}
-            onClick={handleConnectWallet}
+            onClick={openWalletModal}
             loading={isConnecting}
           >
             Connect Wallet
@@ -260,6 +323,13 @@ const Header: React.FC = () => {
         )}
       </HeaderActions>
     </HeaderTop>
+
+    <WalletModal
+      visible={showWalletModal}
+      onCancel={() => setShowWalletModal(false)}
+      onConnect={handleWalletConnect}
+    />
+  </>
   );
 };
 
