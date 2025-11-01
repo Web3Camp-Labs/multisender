@@ -181,7 +181,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ visible, onCancel, onConnect 
       footer={null}
       width={520}
       centered
-      destroyOnClose
+      destroyOnHidden
     >
       <ModalTitle level={3}>
         <WalletOutlined style={{ marginRight: '8px', color: '#667eea' }} />
