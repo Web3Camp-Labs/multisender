@@ -16,19 +16,17 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '18'
           
       - name: Build
         run: |
           cd front-end
           yarn install --frozen-lockfile
           yarn build
-          yarn export
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./front-end/out
-          cname: web3camp.us
+          publish_dir: ./front-end/build
