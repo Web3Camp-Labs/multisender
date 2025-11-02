@@ -1,10 +1,7 @@
 node_modules
-/front-end/yarn.lock
 /.idea/
 build
-package-lock.json
 .env
-./package-lock.json
 cache
 artifacts
 typechain

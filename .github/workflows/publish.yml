@@ -21,8 +21,8 @@ jobs:
       - name: Build
         run: |
           cd front-end
-          yarn install --frozen-lockfile
-          yarn build
+          npm ci
+          npm run build
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
